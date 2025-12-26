@@ -9,7 +9,8 @@
     font-family: Arial, sans-serif; 
     text-align: center; 
     margin-top: 20px; 
-    background-color: #001f3f; 
+    background-color: #001f3f; /* dark blue */
+    color: white; /* text color */
   }
   .fish-btn { 
     width: 50px; 
@@ -49,7 +50,7 @@
 
   .tabs { margin-top: 20px; }
   .tab-button { padding: 5px 10px; margin: 0 5px; cursor: pointer; }
-  .active-tab { background-color: #ddd; }
+  .active-tab { background-color: #ddd; color: black; }
 
   .tab-content { display: none; margin-top: 20px; }
   .tab-content.active { display: block; }
@@ -81,8 +82,11 @@
 </div>
 
 <script>
-const maxFishSize = 10;
+const maxFishSizeDefault = 10; // Basic Fish size cap
+const maxClownfishSize = 15;   // Clownfish size cap
+const maxClownfishBaseWorth = 20; // Base max worth at Okay quality
 const maxFishCount = 10;
+
 let money = 0;
 let fishFood = 50;
 let inventory = [];
@@ -102,18 +106,18 @@ function rollQuality() {
     cumulative += q.chance;
     if (roll < cumulative) return q;
   }
-  return qualities[1];
+  return qualities[1]; // default Okay
 }
 
-// 1 in 3 chance for Clownfish
 function determineSpecies() {
   return Math.random() < 1/3 ? "Clownfish" : "Basic Fish";
 }
 
-// Initialize 5 Okay fish
+// Initialize 5 Okay Basic/Clownfish
 for (let i = 0; i < 5; i++) {
+  const species = determineSpecies();
   inventory.push({ 
-    name: determineSpecies(), 
+    name: species, 
     size: 1, 
     quality: { name: "Okay", multiplier: 1, color: "#ccc" } 
   });
@@ -135,7 +139,7 @@ function updateUI() {
 
   const equippedText = equippedFishIndex === null
     ? "Equipped Fish: None"
-    : `Equipped Fish: ${inventory[equippedFishIndex].quality.name} ${inventory[equippedFishIndex].name} (Size: ${inventory[equippedFishIndex].size}/${maxFishSize})`;
+    : `Equipped Fish: ${inventory[equippedFishIndex].quality.name} ${inventory[equippedFishIndex].name} (Size: ${inventory[equippedFishIndex].size}/${inventory[equippedFishIndex].name==="Clownfish"?maxClownfishSize:maxFishSizeDefault})`;
   document.getElementById('equippedFishStats').textContent = equippedText;
 
   document.getElementById('totalFishCount').textContent = `Total Fish: ${inventory.length}`;
@@ -154,7 +158,7 @@ function updateUI() {
 
     const tip = document.createElement('span');
     tip.className = 'tiptext';
-    tip.textContent = `${fish.quality.name} ${fish.name}\nSize: ${fish.size}/${maxFishSize}`;
+    tip.textContent = `${fish.quality.name} ${fish.name}\nSize: ${fish.size}/${fish.name==="Clownfish"?maxClownfishSize:maxFishSizeDefault}`;
     fishDiv.appendChild(tip);
 
     fishDiv.onclick = () => {
@@ -186,17 +190,19 @@ function addEmergencyFish() {
 function feedFish() {
   if (equippedFishIndex === null) return;
   const fish = inventory[equippedFishIndex];
-  if (fish.size >= maxFishSize) {
+  const maxSize = fish.name === "Clownfish" ? maxClownfishSize : maxFishSizeDefault;
+
+  if (fish.size >= maxSize) {
     alert("This fish is already at maximum size!");
     return;
   }
   if (fishFood > 0) {
     fishFood--;
     fish.size++;
-    if (fish.size > maxFishSize) {
-      const excess = fish.size - maxFishSize;
+    if (fish.size > maxSize) {
+      const excess = fish.size - maxSize;
       fishFood += excess;
-      fish.size = maxFishSize;
+      fish.size = maxSize;
       alert(`You overfed your fish! ${excess} fish food has been returned.`);
     }
     updateUI();
@@ -206,7 +212,10 @@ function feedFish() {
 function sellFish() {
   if (equippedFishIndex === null) return;
   const fish = inventory[equippedFishIndex];
-  let baseValue = fish.size >= maxFishSize ? 10 : Math.floor(fish.size);
+  const maxSize = fish.name === "Clownfish" ? maxClownfishSize : maxFishSizeDefault;
+  let baseValue = fish.name === "Clownfish"
+    ? Math.floor(fish.size / maxSize * maxClownfishBaseWorth)
+    : (fish.size >= maxSize ? 10 : Math.floor(fish.size));
   let moneyEarned = Math.floor(baseValue * fish.quality.multiplier);
   money += moneyEarned;
   alert(`You sold ${fish.quality.name} ${fish.name} for $${moneyEarned}!`);
