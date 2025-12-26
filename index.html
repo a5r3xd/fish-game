@@ -20,6 +20,7 @@
     cursor: pointer; 
     font-size: 24px; 
     line-height: 50px; 
+    position: relative;
   }
   .equipped { 
     border: 3px solid gold; 
@@ -152,9 +153,15 @@ function updateUI() {
   inventory.forEach((fish, index) => {
     const fishDiv = document.createElement('div');
     fishDiv.className = 'fish-btn tooltip';
-    fishDiv.innerHTML = '🐟';
     fishDiv.style.backgroundColor = fish.quality.color;
     if (index === equippedFishIndex) fishDiv.classList.add('equipped');
+
+    const fishImg = document.createElement('img');
+    fishImg.src = 'images/basic_fish_4x.png'; // relative path
+    fishImg.alt = fish.name;
+    fishImg.width = 50;
+    fishImg.height = 50;
+    fishDiv.appendChild(fishImg);
 
     const tip = document.createElement('span');
     tip.className = 'tiptext';
