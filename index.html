@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fish Incremental Game</title>
+<style>
+  body { font-family: Arial, sans-serif; text-align: center; margin-top: 20px; }
+  .fish-btn { width: 50px; height: 50px; display: inline-block; margin: 5px; cursor: pointer; font-size: 24px; line-height: 50px; }
+  .equipped { border: 3px solid gold; }
+  .tooltip { position: relative; display: inline-block; }
+  .tooltip .tiptext {
+    visibility: hidden;
+    width: 160px;
+    background-color: black;
+    color: #fff;
+    text-align: center;
+    padding: 2px 5px;
+    border-radius: 4px;
+    position: absolute;
+    z-index: 1;
+    bottom: 60%;
+    left: 50%;
+    margin-left: -80px;
+    font-size: 12px;
+    white-space: pre-line;
+  }
+  .tooltip:hover .tiptext { visibility: visible; }
+
+  .tabs { margin-top: 20px; }
+  .tab-button { padding: 5px 10px; margin: 0 5px; cursor: pointer; }
+  .active-tab { background-color: #ddd; }
+
+  .tab-content { display: none; margin-top: 20px; }
+  .tab-content.active { display: block; }
+</style>
+</head>
+<body>
+
+<h1>Fish Incremental Game</h1>
+
+<div class="tabs">
+  <button class="tab-button active-tab" onclick="showTab('game')">Game</button>
+  <button class="tab-button" onclick="showTab('inventory')">Inventory</button>
+</div>
+
+<div id="game" class="tab-content active">
+  <p id="fishFood">Fish Food: 50</p>
+  <p id="money">Money: $0</p>
+  <p id="equippedFishStats">Equipped Fish: None</p>
+  <p id="totalFishCount">Total Fish: 5</p>
+
+  <button id="feedBtn" onclick="feedFish()">Feed Equipped Fish</button>
+  <button id="sellBtn" onclick="sellFish()">Sell Equipped Fish</button>
+  <button onclick="buyFood()">Buy 10 Fish Food ($5)</button>
+  <button onclick="buyFish()">Buy 1 Fish ($20)</button>
+</div>
+
+<div id="inventory" class="tab-content">
+  <div id="inventoryGrid"></div>
+</div>
+
+<script>
+const maxFishSize = 10;
+let money = 0;
+let fishFood = 50;
+let inventory = [];
+let equippedFishIndex = null;
+
+// Fish qualities for new fish
+const qualities = [
+  { name: "Bad", multiplier: 0.5, chance: 20, color: "#555" },
+  { name: "Okay", multiplier: 1, chance: 65, color: "#ccc" },
+  { name: "Good", multiplier: 2, chance: 15, color: "gold" }
+];
+
+// Helper to roll quality
+function rollQuality() {
+  const roll = Math.random() * 100;
+  let cumulative = 0;
+  for (const q of qualities) {
+    cumulative += q.chance;
+    if (roll < cumulative) return q;
+  }
+  return qualities[1]; // default Okay
+}
+
+// Initialize with 5 basic fish, all Okay quality
+for (let i = 0; i < 5; i++) {
+  inventory.push({ name: "Basic Fish", size: 1, quality: { name: "Okay", multiplier: 1, color: "#ccc" } });
+}
+
+function showTab(tabName) {
+  document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+  document.getElementById(tabName).classList.add('active');
+
+  document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active-tab'));
+  document.querySelector(`[onclick="showTab('${tabName}')"]`).classList.add('active-tab');
+
+  updateUI();
+}
+
+function updateUI() {
+  document.getElementById('fishFood').textContent = `Fish Food: ${fishFood}`;
+  document.getElementById('money').textContent = `Money: $${money}`;
+
+  const equippedText = equippedFishIndex === null
+    ? "Equipped Fish: None"
+    : `Equipped Fish: ${inventory[equippedFishIndex].quality.name} ${inventory[equippedFishIndex].name} (Size: ${inventory[equippedFishIndex].size}/${maxFishSize})`;
+  document.getElementById('equippedFishStats').textContent = equippedText;
+
+  document.getElementById('totalFishCount').textContent = `Total Fish: ${inventory.length}`;
+
+  document.getElementById('feedBtn').style.display = equippedFishIndex === null ? 'none' : 'inline-block';
+  document.getElementById('sellBtn').style.display = equippedFishIndex === null ? 'none' : 'inline-block';
+
+  const inventoryGrid = document.getElementById('inventoryGrid');
+  inventoryGrid.innerHTML = '';
+  inventory.forEach((fish, index) => {
+    const fishDiv = document.createElement('div');
+    fishDiv.className = 'fish-btn tooltip';
+    fishDiv.innerHTML = '🐟';
+    fishDiv.style.backgroundColor = fish.quality.color;
+    if (index === equippedFishIndex) fishDiv.classList.add('equipped');
+
+    const tip = document.createElement('span');
+    tip.className = 'tiptext';
+    tip.textContent = `${fish.quality.name} ${fish.name}\nSize: ${fish.size}/${maxFishSize}`;
+    fishDiv.appendChild(tip);
+
+    fishDiv.onclick = () => {
+      equippedFishIndex = index;
+      updateUI();
+      showTab('game');
+    }
+
+    inventoryGrid.appendChild(fishDiv);
+  });
+}
+
+function feedFish() {
+  if (equippedFishIndex === null) return;
+  const fish = inventory[equippedFishIndex];
+  if (fish.size >= maxFishSize) {
+    alert("This fish is already at maximum size!");
+    return;
+  }
+  if (fishFood > 0) {
+    fishFood--;
+    fish.size++;
+    if (fish.size > maxFishSize) {
+      const excess = fish.size - maxFishSize;
+      fishFood += excess;
+      fish.size = maxFishSize;
+      alert(`You overfed your fish! ${excess} fish food has been returned.`);
+    }
+    updateUI();
+  } else {
+    alert("You don't have any fish food!");
+  }
+}
+
+function sellFish() {
+  if (equippedFishIndex === null) return;
+  const fish = inventory[equippedFishIndex];
+  let baseValue = fish.size >= maxFishSize ? 10 : Math.floor(fish.size);
+  let moneyEarned = Math.floor(baseValue * fish.quality.multiplier);
+  money += moneyEarned;
+  alert(`You sold ${fish.quality.name} ${fish.name} for $${moneyEarned}!`);
+  inventory.splice(equippedFishIndex, 1);
+  equippedFishIndex = null;
+  updateUI();
+}
+
+function buyFood() {
+  if (money >= 5) {
+    money -= 5;
+    fishFood += 10;
+    updateUI();
+  } else {
+    alert("You need $5 to buy 10 fish food.");
+  }
+}
+
+function buyFish() {
+  if (money >= 20) {
+    money -= 20;
+    const q = rollQuality();
+    inventory.push({ name: "Basic Fish", size: 1, quality: q });
+    updateUI();
+  } else {
+    alert("You need $20 to buy another fish.");
+  }
+}
+
+updateUI();
+</script>
+
+</body>
+</html>
