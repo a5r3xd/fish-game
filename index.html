@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Fish Incremental Game</title>
 <style>
-  body { font-family: Arial, sans-serif; text-align: center; margin-top: 20px; }
+  body { font-family: Arial, sans-serif; text-align: center; margin-top: 20px; color = cyan; }
   .fish-btn { width: 50px; height: 50px; display: inline-block; margin: 5px; cursor: pointer; font-size: 24px; line-height: 50px; }
   .equipped { border: 3px solid gold; }
   .tooltip { position: relative; display: inline-block; }
@@ -62,6 +62,7 @@
 
 <script>
 const maxFishSize = 10;
+const maxFishCount = 10;
 let money = 0;
 let fishFood = 50;
 let inventory = [];
@@ -85,9 +86,18 @@ function rollQuality() {
   return qualities[1]; // default Okay
 }
 
-// Initialize with 5 basic fish, all Okay quality
+// Helper to determine species (1 in 3 chance for Clownfish)
+function determineSpecies() {
+  return Math.random() < 1/3 ? "Clownfish" : "Basic Fish";
+}
+
+// Initialize with 5 Okay Basic Fish
 for (let i = 0; i < 5; i++) {
-  inventory.push({ name: "Basic Fish", size: 1, quality: { name: "Okay", multiplier: 1, color: "#ccc" } });
+  inventory.push({ 
+    name: determineSpecies(), 
+    size: 1, 
+    quality: { name: "Okay", multiplier: 1, color: "#ccc" } 
+  });
 }
 
 function showTab(tabName) {
@@ -136,6 +146,25 @@ function updateUI() {
 
     inventoryGrid.appendChild(fishDiv);
   });
+
+  // Emergency free fish if no fish and cannot buy
+  if (inventory.length === 0 && money < 20) {
+    addEmergencyFish();
+  }
+}
+
+function addEmergencyFish() {
+  if (inventory.length >= maxFishCount) return; // respect max fish
+  const species = determineSpecies();
+  const newFish = {
+    name: species,
+    size: 1,
+    quality: { name: "Bad", multiplier: 0.5, color: "#555" }
+  };
+  inventory.push(newFish);
+  alert(`You were granted a Bad ${species} because you had no fish and no money!`);
+  equippedFishIndex = inventory.length - 1; // auto-equip
+  updateUI();
 }
 
 function feedFish() {
@@ -183,10 +212,15 @@ function buyFood() {
 }
 
 function buyFish() {
+  if (inventory.length >= maxFishCount) {
+    alert("You cannot have more than 10 fish.");
+    return;
+  }
   if (money >= 20) {
     money -= 20;
     const q = rollQuality();
-    inventory.push({ name: "Basic Fish", size: 1, quality: q });
+    const species = determineSpecies();
+    inventory.push({ name: species, size: 1, quality: q });
     updateUI();
   } else {
     alert("You need $20 to buy another fish.");
