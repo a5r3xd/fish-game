@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Fish Incremental Game</title>
+<title>The Fish Game</title>
 <style>
   body { 
     font-family: Arial, sans-serif; 
@@ -57,7 +57,7 @@
 </head>
 <body>
 
-<h1>Fish Incremental Game</h1>
+<h1>The Fish Game</h1>
 
 <div class="tabs">
   <button class="tab-button active-tab" onclick="showTab('game')">Game</button>
@@ -129,13 +129,15 @@ for (let i = 0; i < 5; i++) {
   });
 }
 
-// Helper: get max worth
+// Helper: get max worth including money multiplier
 function getMaxWorth(fish) {
+  let baseWorth;
   if (fish.name === "Clownfish") {
-    return Math.floor(maxClownfishBaseWorth * fish.quality.multiplier);
+    baseWorth = maxClownfishBaseWorth;
   } else {
-    return Math.floor(10 * fish.quality.multiplier);
+    baseWorth = 10;
   }
+  return Math.floor(baseWorth * fish.quality.multiplier * moneyMultiplier);
 }
 
 function showTab(tabName) {
