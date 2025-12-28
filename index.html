@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Fish Incremental Game</title>
+<title>The Fish Game</title>
 <style>
   body { 
     font-family: Arial, sans-serif; 
@@ -50,7 +50,7 @@
 </head>
 <body>
 
-<h1>Fish Incremental Game</h1>
+<h1>The Fish Game</h1>
 
 <div class="tabs">
   <button class="tab-button active-tab" onclick="showTab('game')">Game</button>
@@ -145,7 +145,7 @@ function rollQuality() {
     cumulative += q.chance;
     if (roll < cumulative) return q;
   }
-  return qualities[2]; // default Okay
+  return qualities[2];
 }
 
 // Determine species
@@ -159,6 +159,12 @@ for (let i = 0; i < 5; i++) {
   inventory.push({ name: species, size: 1, quality: { name: "Okay", multiplier: 1, color: "#ccc" } });
 }
 
+// Helper: max worth
+function getMaxWorth(fish) {
+  const baseWorth = fish.name === "Clownfish" ? maxClownfishBaseWorth : 10;
+  return Math.floor(baseWorth * fish.quality.multiplier * moneyMultiplier);
+}
+
 // UI Functions
 function showTab(tabName) {
   document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
@@ -169,6 +175,7 @@ function showTab(tabName) {
 }
 
 function updateUI() {
+  // Game tab stats
   document.getElementById('fishFood').textContent = `Fish Food: ${fishFood}`;
   document.getElementById('money').textContent = `Money: $${money}`;
 
@@ -205,10 +212,16 @@ function updateUI() {
     const tip = document.createElement('span');
     tip.className = 'tiptext';
     const maxSize = fish.name === "Clownfish" ? maxClownfishSize : maxFishSizeDefault;
-    tip.textContent = `${fish.quality.name} ${fish.name}\nSize: ${fish.size}/${maxSize}`;
+    const maxWorth = getMaxWorth(fish);
+    tip.textContent = `${fish.quality.name} ${fish.name}\nSize: ${fish.size}/${maxSize}\nMax Worth: $${maxWorth}`;
     fishDiv.appendChild(tip);
 
-    fishDiv.onclick = () => { equippedFishIndex = index; updateUI(); showTab('game'); };
+    fishDiv.onclick = () => { 
+      equippedFishIndex = index; 
+      updateUI(); 
+      showTab('game'); 
+    };
+
     inventoryGrid.appendChild(fishDiv);
   });
 
