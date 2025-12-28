@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>The Fish Game</title>
+<title>Fish Incremental Game</title>
 <style>
   body { 
     font-family: Arial, sans-serif; 
     text-align: center; 
     margin-top: 20px; 
-    background-color: #001f3f; /* dark blue */
-    color: white; /* text color */
+    background-color: #001f3f; 
+    color: white; 
   }
   .fish-btn { 
     width: 64px; 
@@ -20,13 +20,8 @@
     cursor: pointer; 
     position: relative;
   }
-  .equipped { 
-    border: 3px solid gold; 
-  }
-  .tooltip { 
-    position: relative; 
-    display: inline-block; 
-  }
+  .equipped { border: 3px solid gold; }
+  .tooltip { position: relative; display: inline-block; }
   .tooltip .tiptext {
     visibility: hidden;
     width: 200px;
@@ -43,23 +38,19 @@
     font-size: 12px;
     white-space: pre-line;
   }
-  .tooltip:hover .tiptext { 
-    visibility: visible; 
-  }
-
+  .tooltip:hover .tiptext { visibility: visible; }
   .tabs { margin-top: 20px; }
   .tab-button { padding: 5px 10px; margin: 0 5px; cursor: pointer; }
   .active-tab { background-color: #ddd; color: black; }
-
   .tab-content { display: none; margin-top: 20px; }
   .tab-content.active { display: block; }
-
   button:disabled { opacity: 0.5; cursor: not-allowed; }
+  #fishingLog { max-height: 150px; overflow-y: auto; background: #002a5f; padding: 5px; margin-top: 10px; border-radius: 5px; text-align:left; font-size:14px; }
 </style>
 </head>
 <body>
 
-<h1>The Fish Game</h1>
+<h1>Fish Incremental Game</h1>
 
 <div class="tabs">
   <button class="tab-button active-tab" onclick="showTab('game')">Game</button>
@@ -67,6 +58,7 @@
   <button class="tab-button" onclick="showTab('fishing')">Fishing</button>
 </div>
 
+<!-- Game Tab -->
 <div id="game" class="tab-content active">
   <p id="fishFood">Fish Food: 50</p>
   <p id="money">Money: $0</p>
@@ -83,29 +75,59 @@
   <p id="moneyUpgradeInfo">Next upgrade: $10, x1.2 multiplier</p>
 </div>
 
+<!-- Inventory Tab -->
 <div id="inventory" class="tab-content">
+  <p id="fishCountDisplay"></p>
   <div id="inventoryGrid"></div>
+  <br>
+  <button onclick="upgradeMaxInventory()">Upgrade Max Inventory</button>
+  <p id="maxInventoryInfo"></p>
 </div>
 
+<!-- Fishing Tab -->
 <div id="fishing" class="tab-content">
+  <p>Fishing Chances:</p>
+  <ul>
+    <li id="chanceNothing"></li>
+    <li id="chanceBasic"></li>
+    <li id="chanceClown"></li>
+  </ul>
   <button id="fishBtn" onclick="fishCatch()" style="padding:10px 20px;">Fish</button>
   <p id="fishingCooldown">Cooldown: 0s</p>
+  <button onclick="upgradeLuck()">Upgrade Luck</button>
+  <p id="luckInfo"></p>
+  <button onclick="upgradeCooldown()">Upgrade Cooldown</button>
+  <p id="cooldownInfo"></p>
+  <div id="fishingLog"></div>
 </div>
 
 <script>
 const maxFishSizeDefault = 10;
 const maxClownfishSize = 15;
 const maxClownfishBaseWorth = 20;
-const maxFishCount = 10;
 
 let money = 0;
 let fishFood = 50;
 let inventory = [];
 let equippedFishIndex = null;
 
-// Money Upgrade
+// Game upgrades
 let moneyMultiplier = 1;
 let moneyUpgradeCost = 10;
+
+// Fishing upgrades
+let luckLevel = 0;
+let luckCost = 10;
+let cooldownLevel = 0;
+let cooldownCost = 5;
+let fishingCooldownMax = 5;
+let fishingCooldown = 0;
+let fishingInterval;
+
+// Inventory upgrades
+let maxFishCount = 10;
+let inventoryUpgradeLevel = 0;
+let inventoryUpgradeCost = 20;
 
 // Fish qualities
 const qualities = [
@@ -134,32 +156,15 @@ function determineSpecies() {
 // Initialize 5 Okay Basic/Clownfish
 for (let i = 0; i < 5; i++) {
   const species = determineSpecies();
-  inventory.push({ 
-    name: species, 
-    size: 1, 
-    quality: { name: "Okay", multiplier: 1, color: "#ccc" } 
-  });
+  inventory.push({ name: species, size: 1, quality: { name: "Okay", multiplier: 1, color: "#ccc" } });
 }
 
-// Check if fish is a baby
-function isBaby(fish) {
-  const maxSize = fish.name === "Clownfish" ? maxClownfishSize : maxFishSizeDefault;
-  return fish.size < maxSize / 2;
-}
-
-// Helper: get max worth including money multiplier
-function getMaxWorth(fish) {
-  let baseWorth = fish.name === "Clownfish" ? maxClownfishBaseWorth : 10;
-  return Math.floor(baseWorth * fish.quality.multiplier * moneyMultiplier);
-}
-
+// UI Functions
 function showTab(tabName) {
   document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
   document.getElementById(tabName).classList.add('active');
-
   document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active-tab'));
   document.querySelector(`[onclick="showTab('${tabName}')"]`).classList.add('active-tab');
-
   updateUI();
 }
 
@@ -169,177 +174,121 @@ function updateUI() {
 
   const equippedText = equippedFishIndex === null
     ? "Equipped Fish: None"
-    : `${isBaby(inventory[equippedFishIndex]) ? "Baby " : ""}${inventory[equippedFishIndex].quality.name} ${inventory[equippedFishIndex].name} (Size: ${inventory[equippedFishIndex].size}/${inventory[equippedFishIndex].name==="Clownfish"?maxClownfishSize:maxFishSizeDefault})`;
+    : `${inventory[equippedFishIndex].quality.name} ${inventory[equippedFishIndex].name} (Size: ${inventory[equippedFishIndex].size}/${inventory[equippedFishIndex].name==="Clownfish"?maxClownfishSize:maxFishSizeDefault})`;
   document.getElementById('equippedFishStats').textContent = equippedText;
 
   document.getElementById('totalFishCount').textContent = `Total Fish: ${inventory.length}`;
 
   document.getElementById('feedBtn').style.display = equippedFishIndex === null ? 'none' : 'inline-block';
   document.getElementById('sellBtn').style.display = equippedFishIndex === null ? 'none' : 'inline-block';
+  document.getElementById('moneyUpgradeInfo').textContent = `Next upgrade: $${moneyUpgradeCost}, x1.2 multiplier`;
 
-  document.getElementById('moneyUpgradeInfo').textContent =
-    `Next upgrade: $${moneyUpgradeCost}, x1.2 multiplier`;
+  // Inventory tab
+  document.getElementById('fishCountDisplay').textContent = `Fish owned: ${inventory.length}/${maxFishCount}`;
+  document.getElementById('maxInventoryInfo').textContent = `Next upgrade: $${inventoryUpgradeCost}, +5 fish per level`;
 
-  const inventoryGrid = document.getElementById('inventoryGrid');
-  inventoryGrid.innerHTML = '';
-  inventory.forEach((fish, index) => {
-    const fishDiv = document.createElement('div');
-    fishDiv.className = 'fish-btn tooltip';
-    fishDiv.style.backgroundColor = fish.quality.color;
-    if (index === equippedFishIndex) fishDiv.classList.add('equipped');
-
-    const fishImg = document.createElement('img');
-    fishImg.src = fish.name === "Clownfish" 
-      ? 'images/clownfish_4x.png' 
-      : 'images/basic_fish_4x.png';
-    fishImg.alt = fish.name;
-    fishImg.width = 64;
-    fishImg.height = 64;
-    fishDiv.appendChild(fishImg);
-
-    const tip = document.createElement('span');
-    tip.className = 'tiptext';
-    const maxWorth = getMaxWorth(fish);
-    tip.textContent =
-      `${isBaby(fish) ? "Baby " : ""}${fish.quality.name} ${fish.name}\n` +
-      `Size: ${fish.size}/${fish.name==="Clownfish"?maxClownfishSize:maxFishSizeDefault}\n` +
-      `Max Worth: $${maxWorth}`;
-    fishDiv.appendChild(tip);
-
-    fishDiv.onclick = () => {
-      equippedFishIndex = index;
-      updateUI();
-      showTab('game');
-    }
-
-    inventoryGrid.appendChild(fishDiv);
-  });
+  // Fishing tab
+  const chanceNothing = Math.max(0, 65 - luckLevel*5);
+  const chanceClown = 10 + Math.floor(luckLevel*1.5);
+  const chanceBasic = 100 - chanceNothing - chanceClown;
+  document.getElementById('chanceNothing').textContent = `Nothing: ${chanceNothing}%`;
+  document.getElementById('chanceBasic').textContent = `Basic Fish: ${chanceBasic}%`;
+  document.getElementById('chanceClown').textContent = `Clownfish: ${chanceClown}%`;
+  document.getElementById('luckInfo').textContent = `Luck Level: ${luckLevel} (Next upgrade: $${luckCost})`;
+  document.getElementById('cooldownInfo').textContent = `Cooldown Level: ${cooldownLevel} (Next upgrade: $${cooldownCost})`;
 }
 
+// Game functions
 function feedFish() {
   if (equippedFishIndex === null) return;
   const fish = inventory[equippedFishIndex];
   const maxSize = fish.name === "Clownfish" ? maxClownfishSize : maxFishSizeDefault;
-
-  if (fish.size >= maxSize) {
-    alert("This fish is already at maximum size!");
-    return;
-  }
+  if (fish.size >= maxSize) return;
   if (fishFood > 0) {
-    fishFood--;
-    fish.size++;
-    if (fish.size > maxSize) {
-      const excess = fish.size - maxSize;
-      fishFood += excess;
-      fish.size = maxSize;
-      alert(`You overfed your fish! ${excess} fish food has been returned.`);
-    }
+    fishFood--; fish.size++;
     updateUI();
-  } else alert("You don't have any fish food!");
+  }
 }
 
 function sellFish() {
   if (equippedFishIndex === null) return;
   const fish = inventory[equippedFishIndex];
   const maxSize = fish.name === "Clownfish" ? maxClownfishSize : maxFishSizeDefault;
-  let baseValue = fish.name === "Clownfish"
-    ? Math.floor(fish.size / maxSize * maxClownfishBaseWorth)
-    : (fish.size >= maxSize ? 10 : Math.floor(fish.size));
-  let moneyEarned = Math.floor(baseValue * fish.quality.multiplier * moneyMultiplier);
-  money += moneyEarned;
-  alert(`You sold ${fish.quality.name} ${fish.name} for $${moneyEarned}!`);
-  inventory.splice(equippedFishIndex, 1);
+  const baseValue = fish.name === "Clownfish" ? Math.floor(fish.size / maxSize * maxClownfishBaseWorth) : (fish.size >= maxSize ? 10 : Math.floor(fish.size));
+  money += Math.floor(baseValue * fish.quality.multiplier * moneyMultiplier);
+  inventory.splice(equippedFishIndex,1);
   equippedFishIndex = null;
   updateUI();
 }
 
 function buyFood() {
-  if (money >= 5) {
-    money -= 5;
-    fishFood += 10;
-    updateUI();
-  } else alert("You need $5 to buy 10 fish food.");
+  if (money >= 5) { money -=5; fishFood+=10; updateUI(); }
 }
 
 function buyFish() {
-  if (inventory.length >= maxFishCount) {
-    alert("You cannot have more than 10 fish.");
-    return;
-  }
+  if (inventory.length >= maxFishCount) return;
   if (money >= 20) {
-    money -= 20;
-    const q = rollQuality();
-    const species = determineSpecies();
-    inventory.push({ name: species, size: 1, quality: q });
+    money-=20;
+    inventory.push({ name: determineSpecies(), size:1, quality:rollQuality() });
     updateUI();
-  } else alert("You need $20 to buy another fish.");
+  }
 }
 
-// Money Upgrade function
 function buyMoneyUpgrade() {
   if (money >= moneyUpgradeCost) {
     money -= moneyUpgradeCost;
     moneyMultiplier *= 1.2;
-    moneyUpgradeCost = Math.floor(moneyUpgradeCost * 2);
+    moneyUpgradeCost = Math.round(moneyUpgradeCost * 2);
     updateUI();
-  } else {
-    alert(`You need $${moneyUpgradeCost} to buy this upgrade.`);
   }
 }
 
-// --- Fishing Feature ---
-let fishingCooldown = 0;
-const fishingCooldownMax = 5;
-let fishingInterval;
-
+// Fishing functions
 function fishCatch() {
-  if (fishingCooldown > 0) return;
+  if (fishingCooldown>0) return;
+  if (inventory.length>=maxFishCount) { logFishing("Inventory full!"); return; }
 
-  const roll = Math.random() * 100;
+  const roll = Math.random()*100;
+  const chanceNothing = Math.max(0, 65 - luckLevel*5);
+  const chanceClown = 10 + Math.floor(luckLevel*1.5);
+  const chanceBasic = 100 - chanceNothing - chanceClown;
+
   let caughtFish = null;
+  if (roll < chanceNothing) { logFishing("You caught nothing!"); }
+  else if (roll < chanceNothing + chanceBasic) { caughtFish = { name:"Basic Fish", size:1, quality:rollQuality() }; }
+  else { caughtFish = { name:"Clownfish", size:1, quality:rollQuality() }; }
 
-  if (roll < 65) {
-    alert("You caught nothing!");
-  } else if (roll < 90) {
-    const q = rollQuality();
-    caughtFish = { name: "Basic Fish", size: 1, quality: q };
-  } else {
-    const q = rollQuality();
-    caughtFish = { name: "Clownfish", size: 1, quality: q };
-  }
+  if (caughtFish) { inventory.push(caughtFish); logFishing(`You caught a ${caughtFish.quality.name} ${caughtFish.name}!`); }
 
-  if (caughtFish) {
-    if (inventory.length >= maxFishCount) {
-      alert("Your inventory is full! Cannot catch more fish.");
-    } else {
-      inventory.push(caughtFish);
-      alert(`You caught a ${caughtFish.quality.name} ${caughtFish.name}!`);
-    }
-  }
-
-  fishingCooldown = fishingCooldownMax;
+  fishingCooldown = Math.max(1,fishingCooldownMax - cooldownLevel);
   updateFishingCooldown();
-  if (!fishingInterval) {
-    fishingInterval = setInterval(updateFishingCooldown, 1000);
-  }
+  if (!fishingInterval) fishingInterval = setInterval(updateFishingCooldown,1000);
+  updateUI();
 }
 
 function updateFishingCooldown() {
   const btn = document.getElementById('fishBtn');
-  if (fishingCooldown > 0) {
-    document.getElementById('fishingCooldown').textContent = `Cooldown: ${fishingCooldown}s`;
-    btn.disabled = true;
-    fishingCooldown--;
-  } else {
-    document.getElementById('fishingCooldown').textContent = "Cooldown: 0s";
-    btn.disabled = false;
-    clearInterval(fishingInterval);
-    fishingInterval = null;
-  }
+  if (fishingCooldown>0) { document.getElementById('fishingCooldown').textContent = `Cooldown: ${fishingCooldown}s`; btn.disabled=true; fishingCooldown--; }
+  else { document.getElementById('fishingCooldown').textContent="Cooldown: 0s"; btn.disabled=false; clearInterval(fishingInterval); fishingInterval=null; }
+}
+
+function logFishing(msg) {
+  const log = document.getElementById('fishingLog');
+  const p = document.createElement('p'); p.textContent=msg; log.appendChild(p); log.scrollTop = log.scrollHeight;
+}
+
+// Upgrades
+function upgradeLuck() {
+  if (money>=luckCost) { money-=luckCost; luckLevel++; luckCost=Math.round(luckCost*1.2); updateUI(); }
+}
+function upgradeCooldown() {
+  if (money>=cooldownCost) { money-=cooldownCost; cooldownLevel++; cooldownCost=Math.round(cooldownCost*3); updateUI(); }
+}
+function upgradeMaxInventory() {
+  if (money>=inventoryUpgradeCost) { money-=inventoryUpgradeCost; inventoryUpgradeLevel++; maxFishCount+=5; inventoryUpgradeCost=Math.round(inventoryUpgradeCost*2); updateUI(); }
 }
 
 updateUI();
 </script>
-
 </body>
 </html>
