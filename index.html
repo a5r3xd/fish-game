@@ -91,6 +91,7 @@
     <li id="chanceNothing"></li>
     <li id="chanceBasic"></li>
     <li id="chanceClown"></li>
+    <li id="chanceLeech"></li>
   </ul>
   <p id="qualityLuckInfo"></p>
   <button id="fishBtn" onclick="fishCatch()" style="padding:10px 20px;">Fish</button>
@@ -107,6 +108,8 @@
 const maxFishSizeDefault = 10;
 const maxClownfishSize = 15;
 const maxClownfishBaseWorth = 20;
+const leechMaxSize = 18;
+const leechBaseWorth = 50;
 
 let money = 0;
 let fishFood = 50;
@@ -180,8 +183,8 @@ for(let i=0;i<5;i++){
 
 // Max worth
 function getMaxWorth(fish){ 
-  const base = fish.name==="Clownfish"?maxClownfishBaseWorth:10;
-  return Math.floor(base * fish.quality.multiplier * moneyMultiplier);
+  let baseWorth = fish.name==="Clownfish"?maxClownfishBaseWorth:fish.name==="Leech"?leechBaseWorth:10;
+  return Math.floor(baseWorth * fish.quality.multiplier * moneyMultiplier);
 }
 
 // UI
@@ -194,7 +197,7 @@ updateUI(); }
 function updateUI(){
   document.getElementById('fishFood').textContent = `Fish Food: ${fishFood}`;
   document.getElementById('money').textContent = `Money: $${money}`;
-  document.getElementById('equippedFishStats').textContent = equippedFishIndex===null?"Equipped Fish: None":`${inventory[equippedFishIndex].quality.name} ${inventory[equippedFishIndex].name} (Size: ${inventory[equippedFishIndex].size}/${inventory[equippedFishIndex].name==="Clownfish"?maxClownfishSize:maxFishSizeDefault})`;
+  document.getElementById('equippedFishStats').textContent = equippedFishIndex===null?"Equipped Fish: None":`${inventory[equippedFishIndex].quality.name} ${inventory[equippedFishIndex].name} (Size: ${inventory[equippedFishIndex].size}/${inventory[equippedFishIndex].name==="Clownfish"?maxClownfishSize:inventory[equippedFishIndex].name==="Leech"?leechMaxSize:maxFishSizeDefault})`;
   document.getElementById('totalFishCount').textContent = `Total Fish: ${inventory.length}`;
   document.getElementById('feedBtn').style.display = equippedFishIndex===null?'none':'inline-block';
   document.getElementById('sellBtn').style.display = equippedFishIndex===null?'none':'inline-block';
@@ -207,10 +210,10 @@ function updateUI(){
   inventory.forEach((f,i)=>{
     const div=document.createElement('div'); div.className='fish-btn tooltip';
     div.style.backgroundColor=f.quality.color; if(i===equippedFishIndex) div.classList.add('equipped');
-    const img=document.createElement('img'); img.src=f.name==="Clownfish"?'images/clownfish_4x.png':'images/basic_fish_4x.png'; img.width=64; img.height=64;
+    const img=document.createElement('img'); img.src=f.name==="Clownfish"?'images/clownfish_4x.png':f.name==="Leech"?'images/leech_4x.png':'images/basic_fish_4x.png'; img.width=64; img.height=64;
     div.appendChild(img);
     const tip=document.createElement('span'); tip.className='tiptext';
-    const maxSize=f.name==="Clownfish"?maxClownfishSize:maxFishSizeDefault;
+    const maxSize=f.name==="Clownfish"?maxClownfishSize:f.name==="Leech"?leechMaxSize:maxFishSizeDefault;
     tip.textContent=`${f.quality.name} ${f.name}\nSize: ${f.size}/${maxSize}\nMax Worth: $${getMaxWorth(f)}`;
     div.appendChild(tip);
     div.onclick=()=>{ equippedFishIndex=i; updateUI(); showTab('game'); };
@@ -219,11 +222,14 @@ function updateUI(){
 
   // Fishing tab
   const cNothing=Math.max(0,65-luckLevel*5);
-  const cClown=10+Math.floor(luckLevel*1.5);
-  const cBasic=100-cNothing-cClown;
-  document.getElementById('chanceNothing').textContent=`Nothing: ${cNothing}%`;
-  document.getElementById('chanceBasic').textContent=`Basic Fish: ${cBasic}%`;
-  document.getElementById('chanceClown').textContent=`Clownfish: ${cClown}%`;
+  const cClown=10 + luckLevel*1.2;
+  const cLeech=2 + luckLevel*0.3;
+  const cBasic=100-cNothing-cClown-cLeech;
+  document.getElementById('chanceNothing').textContent=`Nothing: ${cNothing.toFixed(1)}%`;
+  document.getElementById('chanceBasic').textContent=`Basic Fish: ${cBasic.toFixed(1)}%`;
+  document.getElementById('chanceClown').textContent=`Clownfish: ${cClown.toFixed(1)}%`;
+  document.getElementById('chanceLeech').textContent=`Leech: ${cLeech.toFixed(1)}%`;
+
   document.getElementById('luckInfo').textContent=`Luck Level: ${luckLevel} (Next upgrade: $${luckCost})`;
   document.getElementById('cooldownInfo').textContent=`Cooldown Level: ${cooldownLevel} (Next upgrade: $${cooldownCost})`;
 
@@ -243,27 +249,46 @@ function updateUI(){
 }
 
 // Game functions
-function feedFish(){ if(equippedFishIndex===null) return; const f=inventory[equippedFishIndex]; const max=f.name==="Clownfish"?maxClownfishSize:maxFishSizeDefault; if(f.size<max&&fishFood>0){ f.size++; fishFood--; updateUI(); } }
-function sellFish(){ if(equippedFishIndex===null) return; const f=inventory[equippedFishIndex]; const max=f.name==="Clownfish"?maxClownfishSize:maxFishSizeDefault; const base=f.name==="Clownfish"?Math.floor(f.size/max*maxClownfishBaseWorth):(f.size>=max?10:Math.floor(f.size)); money+=Math.floor(base*f.quality.multiplier*moneyMultiplier); inventory.splice(equippedFishIndex,1); equippedFishIndex=null; updateUI(); }
+function feedFish(){ if(equippedFishIndex===null) return; const f=inventory[equippedFishIndex]; const max=f.name==="Clownfish"?maxClownfishSize:f.name==="Leech"?leechMaxSize:maxFishSizeDefault; if(f.size<max&&fishFood>0){ f.size++; fishFood--; updateUI(); } }
+function sellFish(){ if(equippedFishIndex===null) return; const f=inventory[equippedFishIndex]; const max=f.name==="Clownfish"?maxClownfishSize:f.name==="Leech"?leechMaxSize:maxFishSizeDefault; const base=f.name==="Clownfish"?Math.floor(f.size/max*maxClownfishBaseWorth):f.name==="Leech"?Math.floor(f.size/max*leechBaseWorth):(f.size>=max?10:Math.floor(f.size)); money+=Math.floor(base*f.quality.multiplier*moneyMultiplier); inventory.splice(equippedFishIndex,1); equippedFishIndex=null; updateUI(); }
 function buyFood(){ if(money>=5){ money-=5; fishFood+=10; updateUI(); } }
-function buyFish(){ if(inventory.length>=maxFishCount) return; if(money>=20){ money-=20; inventory.push({name:determineSpecies(),size:1,quality:rollQuality()}); updateUI(); } }
+function buyFish(){
+  if(inventory.length>=maxFishCount) return;
+  if(money>=20){
+    money-=20;
+    const speciesRoll=Math.random();
+    let species;
+    if(speciesRoll<1/3){ species = Math.random()<0.2?"Leech":"Clownfish"; }
+    else species="Basic Fish";
+    inventory.push({name:species,size:1,quality:rollQuality()});
+    updateUI();
+  }
+}
 function buyMoneyUpgrade(){ if(money>=moneyUpgradeCost){ money-=moneyUpgradeCost; moneyMultiplier*=1.2; moneyUpgradeCost=Math.round(moneyUpgradeCost*2); updateUI(); } }
 
 // Fishing
 function fishCatch(){
   if(fishingCooldown>0) return;
   if(inventory.length>=maxFishCount){ logFishing("Inventory full!"); return; }
+
   const roll=Math.random()*100;
-  const cNothing=Math.max(0,65-luckLevel*5);
-  const cClown=10+Math.floor(luckLevel*1.5);
-  const cBasic=100-cNothing-cClown;
+  const chanceNothing=Math.max(0,65-luckLevel*5);
+  const chanceClown=10+luckLevel*1.2;
+  const chanceLeech=2+luckLevel*0.3;
+  const chanceBasic=100-chanceNothing-chanceClown-chanceLeech;
+
   let caught=null;
-  if(roll<cNothing){ logFishing("You caught nothing!"); }
-  else if(roll<cNothing+cBasic){ caught={name:"Basic Fish",size:1,quality:rollQuality()}; }
-  else{ caught={name:"Clownfish",size:1,quality:rollQuality()}; }
+  if(roll<chanceNothing) logFishing("You caught nothing!");
+  else if(roll<chanceNothing+chanceBasic) caught={name:"Basic Fish",size:1,quality:rollQuality()};
+  else if(roll<chanceNothing+chanceBasic+chanceClown) caught={name:"Clownfish",size:1,quality:rollQuality()};
+  else caught={name:"Leech",size:1,quality:rollQuality()};
+
   if(caught){ inventory.push(caught); logFishing(`You caught a ${caught.quality.name} ${caught.name}!`); }
-  fishingCooldown=Math.max(1,fishingCooldownMax-cooldownLevel); updateFishingCooldown();
+
+  fishingCooldown = Math.max(1,fishingCooldownMax-cooldownLevel);
+  updateFishingCooldown();
   if(!fishingInterval) fishingInterval=setInterval(updateFishingCooldown,1000);
+
   updateUI();
 }
 function updateFishingCooldown(){ const btn=document.getElementById('fishBtn'); if(fishingCooldown>0){ document.getElementById('fishingCooldown').textContent=`Cooldown: ${fishingCooldown}s`; btn.disabled=true; fishingCooldown--; } else { document.getElementById('fishingCooldown').textContent="Cooldown: 0s"; btn.disabled=false; clearInterval(fishingInterval); fishingInterval=null; } }
