@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>The Fish Game</title>
+<title>Fish Incremental Game</title>
 <style>
   body { 
     font-family: Arial, sans-serif; 
@@ -50,7 +50,7 @@
 </head>
 <body>
 
-<h1>The Fish Game</h1>
+<h1>Fish Incremental Game</h1>
 
 <div class="tabs">
   <button class="tab-button active-tab" onclick="showTab('game')">Game</button>
@@ -169,7 +169,6 @@ function showTab(tabName) {
 }
 
 function updateUI() {
-  // Update game tab stats
   document.getElementById('fishFood').textContent = `Fish Food: ${fishFood}`;
   document.getElementById('money').textContent = `Money: $${money}`;
 
@@ -188,7 +187,7 @@ function updateUI() {
   document.getElementById('fishCountDisplay').textContent = `Fish owned: ${inventory.length}/${maxFishCount}`;
   document.getElementById('maxInventoryInfo').textContent = `Next upgrade: $${inventoryUpgradeCost}, +5 fish per level`;
 
-  // Generate inventory grid with tooltips including Max Worth
+  // Generate inventory grid
   const inventoryGrid = document.getElementById('inventoryGrid');
   inventoryGrid.innerHTML = '';
   inventory.forEach((fish, index) => {
@@ -206,30 +205,12 @@ function updateUI() {
     const tip = document.createElement('span');
     tip.className = 'tiptext';
     const maxSize = fish.name === "Clownfish" ? maxClownfishSize : maxFishSizeDefault;
-    const maxWorth = getMaxWorth(fish); // Calculate Max Worth including money multiplier
-    tip.textContent = `${fish.quality.name} ${fish.name}\nSize: ${fish.size}/${maxSize}\nMax Worth: $${maxWorth}`;
+    tip.textContent = `${fish.quality.name} ${fish.name}\nSize: ${fish.size}/${maxSize}`;
     fishDiv.appendChild(tip);
 
-    fishDiv.onclick = () => { 
-      equippedFishIndex = index; 
-      updateUI(); 
-      showTab('game'); 
-    };
-
+    fishDiv.onclick = () => { equippedFishIndex = index; updateUI(); showTab('game'); };
     inventoryGrid.appendChild(fishDiv);
   });
-
-  // Fishing tab chances and info
-  const chanceNothing = Math.max(0, 65 - luckLevel*5);
-  const chanceClown = 10 + Math.floor(luckLevel*1.5);
-  const chanceBasic = 100 - chanceNothing - chanceClown;
-  document.getElementById('chanceNothing').textContent = `Nothing: ${chanceNothing}%`;
-  document.getElementById('chanceBasic').textContent = `Basic Fish: ${chanceBasic}%`;
-  document.getElementById('chanceClown').textContent = `Clownfish: ${chanceClown}%`;
-  document.getElementById('luckInfo').textContent = `Luck Level: ${luckLevel} (Next upgrade: $${luckCost})`;
-  document.getElementById('cooldownInfo').textContent = `Cooldown Level: ${cooldownLevel} (Next upgrade: $${cooldownCost})`;
-}
-
 
   // Fishing tab
   const chanceNothing = Math.max(0, 65 - luckLevel*5);
