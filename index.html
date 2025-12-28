@@ -287,17 +287,24 @@ function fishCatchCascading() {
     let cum = 0;
     let caught = null;
 
-    cum += chances.nothing;
-    if (roll < cum) { logFishing("You caught nothing!"); startCooldown(); return; }
+cum += chances.nothing;
+if (roll < cum) { 
+    logFishing("You caught nothing!"); 
+    startCooldown(); 
+    return; 
+}
 
-    cum += chances.basic;
-    if (roll < cum) caught = { name: "Basic Fish", size: 1, quality: rollQuality() };
+cum += chances.basic;
+if (roll < cum) {
+    caught = { name: "Basic Fish", size: 1, quality: rollQuality() };
+}
+else if ((cum += chances.clown) && roll < cum) {
+    caught = { name: "Clownfish", size: 1, quality: rollQuality() };
+}
+    else {
+    caught = { name: "Leech", size: 1, quality: rollQuality() };
+}
 
-    cum += chances.clown;
-    if (roll < cum) caught = { name: "Clownfish", size: 1, quality: rollQuality() };
-
-    cum += chances.leech;
-    if (!caught) caught = { name: "Leech", size: 1, quality: rollQuality() };
 
     inventory.push(caught);
     logFishing(`You caught a ${caught.quality.name} ${caught.name}!`);
