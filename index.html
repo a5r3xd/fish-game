@@ -357,8 +357,15 @@ function buyMoneyUpgrade(){ if(money>=moneyUpgradeCost){ money-=moneyUpgradeCost
 
 // --- Fishing functions ---
 function fishCatchCascading(){
-    if(fishingCooldown>0) return;
-    fishingCooldown=fishingCooldownMax;
+    if(fishingCooldown > 0) return;
+
+    // ENFORCE INVENTORY CAP
+    if(inventory.length >= maxFishCount){
+        logFishing("Inventory full! Sell fish or upgrade inventory.");
+        return;
+    }
+
+    fishingCooldown = fishingCooldownMax;
     const speciesWeights=calculateSpeciesWeights(speciesLuckLevel);
     const totalWeight=Object.values(speciesWeights).reduce((a,b)=>a+b,0);
     let r=Math.random()*totalWeight;
