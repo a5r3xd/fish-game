@@ -5,35 +5,322 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>The Fish Game</title>
 <style>
-    body {
-        font-family: Arial, sans-serif;
-        text-align: center;
-        margin-top: 20px;
-        background-color: #001f3f;
-        color: white;
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    margin-top: 20px;
+    background-color: #001f3f;
+    color: white;
+}
+.fish-btn {
+    width: 64px;
+    height: 64px;
+    display: inline-block;
+    margin: 6px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    border-radius: 2px;
+}
+.equipped { border: 3px solid gold; }
+.tabs { margin-top: 20px; }
+.tab-button { padding: 5px 10px; margin: 0 5px; cursor: pointer; }
+.active-tab { background-color: #ddd; color: black; }
+.tab-content { display: none; margin-top: 20px; }
+.tab-content.active { display: block; }
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+#fishingLog, #foodShopLog {
+    max-height: 150px;
+    overflow-y: auto;
+    background: #002a5f;
+    padding: 5px;
+    margin-top: 10px;
+    border-radius: 5px;
+    text-align: left;
+    font-size: 14px;
+}
+@keyframes flawlessMoveRight { 0% { background-position: 0 0; } 100% { background-position: 200% 0; } }
+@keyframes particleMove { 0% { transform: translateX(0); opacity: 0.7; } 50% { transform: translateX(-64px); opacity: 1; } 100% { transform: translateX(-128px); opacity: 0; } }
+</style>
+</head>
+<body>
+<h1>The Fish Game</h1>
+
+<div class="tabs">
+    <button class="tab-button active-tab" onclick="showTab('game')">Game</button>
+    <button class="tab-button" onclick="showTab('inventory')">Inventory</button>
+    <button class="tab-button" onclick="showTab('fishing')">Fishing</button>
+    <button class="tab-button" onclick="showTab('foodShop')">Food Shop</button>
+</div>
+
+<div id="game" class="tab-content active">
+    <p id="fishFood">Fish Food: 50</p>
+    <p id="money">Money: $0</p>
+    <p id="equippedFishStats">Equipped Fish: None</p>
+    <p id="totalFishCount">Total Fish: 5</p>
+
+    <button id="feedBtn" onclick="feedFish()">Feed Equipped Fish</button>
+    <button id="sellBtn" onclick="sellFish()">Sell Equipped Fish</button>
+    <br><br>
+    <button onclick="buyFish()">Buy 1 Fish ($20)</button>
+    <br><br>
+    <button id="moneyUpgradeBtn" onclick="buyMoneyUpgrade()">Upgrade Money Gain</button>
+    <p id="moneyUpgradeInfo">Next upgrade: $10, x1.2 multiplier</p>
+</div>
+
+<div id="inventory" class="tab-content">
+    <p id="fishCountDisplay"></p>
+    <div id="inventoryGrid"></div>
+    <br>
+    <button onclick="upgradeMaxInventory()">Upgrade Max Inventory</button>
+    <p id="maxInventoryInfo"></p>
+</div>
+
+<div id="fishing" class="tab-content">
+    <p>Fishing Species Chances:</p>
+    <ul>
+        <li id="chanceNothing"></li>
+        <li id="chanceBasic"></li>
+        <li id="chanceClown"></li>
+        <li id="chanceLeech"></li>
+    </ul>
+    <p id="qualityLuckInfo"></p>
+    <button id="fishBtn" onclick="fishCatchCascading()" style="padding:10px 20px;">Fish</button>
+    <p id="fishingCooldown">Cooldown: 0s</p>
+    <button onclick="upgradeLuck()">Upgrade Luck</button>
+    <p id="luckInfo"></p>
+    <button onclick="upgradeCooldown()">Upgrade Cooldown</button>
+    <p id="cooldownInfo"></p>
+    <button onclick="upgradeQualityLuck()">Upgrade Quality Luck</button>
+    <div id="fishingLog"></div>
+</div>
+
+<div id="foodShop" class="tab-content">
+    <p>Food Shop</p>
+    <div id="foodShopGrid"></div>
+    <div id="foodShopLog"></div>
+</div>
+
+<div id="globalTooltip" style="
+    position: absolute;
+    pointer-events: none;
+    background-color: rgba(0,0,0,0.8);
+    color: white;
+    padding: 5px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: pre-line;
+    display: none;
+    z-index: 9999;
+    box-shadow: 0 0 8px black;
+"></div>
+
+<script>
+/* ---------- ORIGINAL GAME VARIABLES ---------- */
+const maxFishSizeDefault = 10;
+const maxClownfishSize = 15;
+const maxClownfishBaseWorth = 20;
+const leechMaxSize = 18;
+const leechBaseWorth = 50;
+
+let money = 0;
+let fishFood = 50;
+let inventory = [];
+let equippedFishIndex = null;
+let moneyMultiplier = 1;
+let moneyUpgradeCost = 10;
+
+let luckLevel = 0; 
+let luckCost = 10;
+let cooldownLevel = 0;
+let cooldownCost = 5;
+let fishingCooldownMax = 5;
+let fishingCooldown = 0;
+
+let maxFishCount = 10;
+let inventoryUpgradeLevel = 0;
+let inventoryUpgradeCost = 20;
+let qualityLuckLevel = 0;
+let qualityLuckCost = 20;
+
+let speciesLuckLevel = 0; 
+const speciesOrder = ["nothing","basic","clown","leech"];
+const baseSpeciesWeights = { nothing:55000, basic:25000, clown:15000, leech:5000 };
+
+let currentTab = "game";
+
+/* ---------- QUALITIES ---------- */
+const qualities = [
+    { name: "Bad", multiplier: 0.5, color: "#555", sizeMultiplier: 1 },
+    { name: "Okay", multiplier: 1, color: "#ccc", sizeMultiplier: 1 },
+    { name: "Good", multiplier: 2, color: "gold", sizeMultiplier: 1 },
+    { name: "Perfect", multiplier: 8, color: "cyan", sizeMultiplier: 1 },
+    { name: "Flawless", multiplier: 50, color: "#007070", sizeMultiplier: 2 },
+    { name: "Prismatic", multiplier: 1000, color: "purple", sizeMultiplier: 10, isPrismatic: true },
+    { name: "Astral", multiplier: 100000, color: "#0b3d2e", sizeMultiplier: 25, isPrismatic: true }
+];
+const qualityOrder = ["bad","okay","good","perfect","flawless","prismatic","astral"];
+
+/* ---------- INITIAL INVENTORY ---------- */
+for(let i=0;i<5;i++){
+    const species = Math.random()<1/3?"Clownfish":"Basic Fish";
+    inventory.push({ name: species, size:1, quality:{name:"Okay", multiplier:1,color:"#ccc"} });
+}
+
+/* ---------- FOOD SHOP ---------- */
+const foodJars = [
+    { quality: "Bad", cost: 5, food: 10 },
+    { quality: "Okay", cost: 40, food: 50 },
+    { quality: "Good", cost: 250, food: 300 },
+    { quality: "Perfect", cost: 1000, food: 1000 },
+    { quality: "Flawless", cost: 8000, food: 5000 },
+    { quality: "Prismatic", cost: 50000, food: 20000 },
+    { quality: "Astral", cost: 1000000, food: 100000 }
+];
+
+/* ---------- SHOW / HIDE TABS ---------- */
+function showTab(tab){
+    currentTab=tab;
+    hideTooltip();
+    document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+    document.getElementById(tab).classList.add('active');
+    document.querySelectorAll('.tab-button').forEach(btn=>btn.classList.remove('active-tab'));
+    document.querySelectorAll('.tab-button').forEach(btn=>{
+        if(btn.textContent.toLowerCase()===tab) btn.classList.add('active-tab');
+    });
+    updateUI();
+}
+
+/* ---------- TOOLTIP ---------- */
+const tooltip=document.getElementById('globalTooltip');
+function showTooltip(text,event){
+    tooltip.innerHTML=text;
+    tooltip.style.left=event.pageX+10+'px';
+    tooltip.style.top=event.pageY+10+'px';
+    tooltip.style.display='block';
+}
+function hideTooltip(){ tooltip.style.display='none'; }
+
+/* ---------- INVENTORY GRID ---------- */
+function updateInventoryGrid(){
+    const grid=document.getElementById('inventoryGrid');
+    grid.innerHTML='';
+    inventory.sort((a,b)=>{
+        const aIndex = qualityOrder.indexOf(a.quality.name.toLowerCase());
+        const bIndex = qualityOrder.indexOf(b.quality.name.toLowerCase());
+        return bIndex - aIndex;
+    });
+    inventory.forEach((f,i)=>{
+        const div=document.createElement('div');
+        div.className='fish-btn';
+        applyQualityStyle(div,f.quality);
+        if(i===equippedFishIndex) div.classList.add('equipped');
+        const img=document.createElement('img');
+        img.src=f.name==="Clownfish"?'images/clownfish_4x.png':f.name==="Leech"?'images/leech_4x.png':'images/basic_fish_4x.png';
+        img.width=64; img.height=64;
+        div.appendChild(img);
+        const baseMax=f.name==="Clownfish"?maxClownfishSize:f.name==="Leech"?leechMaxSize:maxFishSizeDefault;
+        const max=Math.floor(baseMax*(f.quality.sizeMultiplier||1));
+        const tooltipHTML=`<b>${f.name}</b><br> <span style="color:${f.quality.color}">${f.quality.name}</span><br> <b>Max Size:</b> ${max}<br> <b>Max Worth:</b> $${getMaxWorth(f)}`;
+        div.onmouseenter=(e)=>showTooltip(tooltipHTML,e);
+        div.onmousemove=(e)=>showTooltip(tooltipHTML,e);
+        div.onmouseleave=hideTooltip;
+        div.onclick=()=>{ equippedFishIndex=i; hideTooltip(); updateUI(); showTab('game'); };
+        grid.appendChild(div);
+    });
+}
+
+/* ---------- APPLY QUALITY STYLE ---------- */
+function applyQualityStyle(div,quality){
+    if(quality.name==="Flawless"){
+        div.style.background='repeating-linear-gradient(90deg, #007070 0px, #006f6f 15px, #005f5f 30px, #004f4f 45px)';
+        div.style.backgroundSize='200% 100%';
+        div.style.animation='flawlessMoveRight 6s linear infinite';
+    } else if(quality.name==="Prismatic"){
+        div.style.background='repeating-linear-gradient(90deg, #800080 0px, #6a0dad 15px, #4b0082 30px, #8a2be2 45px)';
+        div.style.backgroundSize='200% 100%';
+        div.style.animation='flawlessMoveRight 6s linear infinite';
+        addParticles(div);
+    } else if(quality.name==="Astral"){
+        div.style.background='repeating-linear-gradient(90deg, #0b3d2e 0px, #065230 15px, #003d1f 30px, #0a4c28 45px)';
+        div.style.backgroundSize='200% 100%';
+        div.style.animation='flawlessMoveRight 6s linear infinite';
+        addParticles(div);
+    } else {
+        div.style.backgroundColor=quality.color;
     }
-    .fish-btn {
-        width: 64px;
-        height: 64px;
-        display: inline-block;
-        margin: 6px;
-        cursor: pointer;
-        position: relative;
-        overflow: hidden;
+}
+
+/* ---------- ADD PARTICLES ---------- */
+function addParticles(div){
+    const particleCount = 5 + Math.floor(Math.random()*5);
+    for(let p=0;p<particleCount;p++){
+        const particle=document.createElement('div');
+        particle.style.position='absolute';
+        particle.style.width='2px';
+        particle.style.height='2px';
+        particle.style.background='white';
+        particle.style.boxShadow='0 0 6px white,0 0 10px white';
+        particle.style.borderRadius='50%';
+        particle.style.top=Math.random()*64+'px';
+        particle.style.left='64px';
+        particle.style.opacity=0.7;
+        particle.style.animation='particleMove 6s linear infinite';
+        particle.style.animationDelay=`${Math.random()*3}s`;
+        div.appendChild(particle);
     }
-    .equipped { border: 3px solid gold; }
-    .tabs { margin-top: 20px; }
-    .tab-button { padding: 5px 10px; margin: 0 5px; cursor: pointer; }
-    .active-tab { background-color: #ddd; color: black; }
-    .tab-content { display: none; margin-top: 20px; }
-    .tab-content.active { display: block; }
-    button:disabled { opacity: 0.5; cursor: not-allowed; }
-    #fishingLog {
-        max-height: 150px;
-        overflow-y: auto;
-        background: #002a5f;
-        padding: 5px;
-        margin-top: 10px;
+}
+
+/* ---------- FOOD SHOP GRID ---------- */
+function updateFoodShopGrid(){
+    const grid = document.getElementById('foodShopGrid');
+    grid.innerHTML='';
+    foodJars.forEach(jar=>{
+        const div = document.createElement('div');
+        div.className='fish-btn';
+        const quality = qualities.find(q=>q.name===jar.quality);
+        applyQualityStyle(div,quality);
+        const img = document.createElement('img');
+        img.src='images/fish_jar_4x.png';
+        img.width=64; img.height=64;
+        div.appendChild(img);
+        const tooltipHTML=`<b>Food Jar</b><br><span style="color:${quality.color}">${jar.quality}</span><br>Fish Food: ${jar.food}<br>Cost: $${jar.cost}`;
+        div.onmouseenter=(e)=>showTooltip(tooltipHTML,e);
+        div.onmousemove=(e)=>showTooltip(tooltipHTML,e);
+        div.onmouseleave=hideTooltip;
+        div.onclick=()=>{
+            if(money>=jar.cost){
+                money-=jar.cost;
+                fishFood+=jar.food;
+                document.getElementById('foodShopLog').textContent="Thanks for buying fish food!";
+                updateUI();
+            }
+        };
+        grid.appendChild(div);
+    });
+}
+
+/* ---------- ORIGINAL FUNCTIONS ---------- */
+const getMaxWorth=(fish)=>{ let base=fish.name==="Clownfish"?maxClownfishBaseWorth:fish.name==="Leech"?leechBaseWorth:10; return Math.floor(base*fish.quality.multiplier*moneyMultiplier); };
+function feedFish(){ if(equippedFishIndex===null)return; const f=inventory[equippedFishIndex]; const baseMax=f.name==="Clownfish"?maxClownfishSize:f.name==="Leech"?leechMaxSize:maxFishSizeDefault; const max=Math.floor(baseMax*(f.quality.sizeMultiplier||1)); if(f.size<max && fishFood>0){f.size++; fishFood--; updateUI();} }
+function sellFish(){ if(equippedFishIndex===null)return; const f=inventory[equippedFishIndex]; const baseMax=f.name==="Clownfish"?maxClownfishSize:f.name==="Leech"?leechMaxSize:maxFishSizeDefault; const max=Math.floor(baseMax*(f.quality.sizeMultiplier||1)); const base=f.name==="Clownfish"?Math.floor(f.size/max*maxClownfishBaseWorth):f.name==="Leech"?Math.floor(f.size/max*leechBaseWorth):(f.size>=max?10:Math.floor(f.size)); money+=Math.floor(base*f.quality.multiplier*moneyMultiplier); inventory.splice(equippedFishIndex,1); equippedFishIndex=null; updateUI(); }
+function buyFish(){ if(inventory.length>=maxFishCount)return; if(money>=20){ money-=20; const speciesRoll=Math.random(); let species; if(speciesRoll<1/3){ species=Math.random()<0.2?"Leech":"Clownfish"; } else species="Basic Fish"; inventory.push({name:species,size:1,quality:rollQuality()}); updateUI(); } }
+function buyMoneyUpgrade(){ if(money>=moneyUpgradeCost){ money-=moneyUpgradeCost; moneyMultiplier*=1.2; moneyUpgradeCost=Math.round(moneyUpgradeCost*1.5); updateUI(); } }
+function upgradeQualityLuck(){ if(money>=qualityLuckCost){ money-=qualityLuckCost; qualityLuckLevel++; qualityLuckCost=Math.floor(qualityLuckCost*1.15); updateUI(); } }
+function upgradeCooldown(){ if(money>=cooldownCost){ money-=cooldownCost; cooldownLevel++; cooldownCost=Math.floor(cooldownCost*3); fishingCooldownMax=Math.max(1,fishingCooldownMax-1); updateUI(); } }
+function upgradeMaxInventory(){ if(money>=inventoryUpgradeCost){ money-=inventoryUpgradeCost; inventoryUpgradeLevel++; maxFishCount+=5; inventoryUpgradeCost=Math.floor(inventoryUpgradeCost*2); updateUI(); } }
+function upgradeLuck(){ if(money>=luckCost){ money-=luckCost; speciesLuckLevel++; luckCost=Math.floor(luckCost*1.15); updateUI(); } }
+function fishCatchCascading(){ if(fishingCooldown>0) return; if(inventory.length>=maxFishCount){ logFishing("Inventory full! Sell fish or upgrade inventory."); return; } fishingCooldown=fishingCooldownMax; const speciesWeights=calculateSpeciesWeights(speciesLuckLevel); const totalWeight=Object.values(speciesWeights).reduce((a,b)=>a+b,0); let r=Math.random()*totalWeight; let caughtSpecies="nothing"; for(const sp of speciesOrder){ r-=speciesWeights[sp]; if(r<=0){ caughtSpecies=sp; break; } } if(caughtSpecies==="nothing"){ logFishing("Caught nothing!"); } else{ let fName=caughtSpecies==="basic"?"Basic Fish":caughtSpecies==="clown"?"Clownfish":"Leech"; const fQuality=rollQuality(); inventory.push({name:fName,size:1,quality:fQuality}); logFishing(`Caught a ${fQuality.name} ${fName}!`); } updateUI(); }
+function logFishing(msg){ const log=document.getElementById('fishingLog'); log.innerHTML=`${msg}<br>`+log.innerHTML; }
+function calculateSpeciesWeights(level){ let weights={...baseSpeciesWeights}; for(let l=1;l<=level;l++){ let lowestIndex=speciesOrder.findIndex(sp=>weights[sp]>0 && sp!=="leech"); if(lowestIndex===-1) break; let lowest=speciesOrder[lowestIndex]; weights[lowest]+=1000; } return weights; }
+function rollQuality(){ const qualityIndex=Math.min(Math.floor(Math.random()*7 + qualityLuckLevel/2),qualities.length-1); return qualities[qualityIndex]; }
+function updateUI(){ document.getElementById('fishFood').textContent=`Fish Food: ${fishFood}`; document.getElementById('money').textContent=`Money: $${money}`; document.getElementById('totalFishCount').textContent=`Total Fish: ${inventory.length}`; document.getElementById('moneyUpgradeInfo').textContent=`Next upgrade: $${moneyUpgradeCost}, x1.2 multiplier`; document.getElementById('luckInfo').textContent=`Luck Level: ${luckLevel}, Cost: $${luckCost}`; document.getElementById('cooldownInfo').textContent=`Cooldown Level: ${cooldownLevel}, Cost: $${cooldownCost}`; document.getElementById('maxInventoryInfo').textContent=`Max Inventory: ${maxFishCount}, Upgrade Cost: $${inventoryUpgradeCost}`; updateInventoryGrid(); updateFoodShopGrid(); }
+setInterval(()=>{ if(fishingCooldown>0) fishingCooldown--; document.getElementById('fishingCooldown').textContent=`Cooldown: ${fishingCooldown}s`; },1000);
+
+updateUI();
+</script>
+</body>
+</html>
         border-radius: 5px;
         text-align: left;
         font-size: 14px;
