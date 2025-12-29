@@ -5,91 +5,92 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>The Fish Game</title>
 <style>
-  body { 
-    font-family: Arial, sans-serif; 
-    text-align: center; 
-    margin-top: 20px; 
-    background-color: #001f3f; 
-    color: white; 
-  }
-  .fish-btn { 
-    width: 64px; 
-    height: 64px; 
-    display: inline-block; 
-    margin: 6px; 
-    cursor: pointer; 
-    position: relative;
-    overflow: hidden;
-  }
-  .equipped { border: 3px solid gold; }
-  .tabs { margin-top: 20px; }
-  .tab-button { padding: 5px 10px; margin: 0 5px; cursor: pointer; }
-  .active-tab { background-color: #ddd; color: black; }
-  .tab-content { display: none; margin-top: 20px; }
-  .tab-content.active { display: block; }
-  button:disabled { opacity: 0.5; cursor: not-allowed; }
-  #fishingLog { max-height: 150px; overflow-y: auto; background: #002a5f; padding: 5px; margin-top: 10px; border-radius: 5px; text-align:left; font-size:14px; }
-
-  @keyframes flawlessMoveRight { 0% { background-position: 0 0; } 100% { background-position: 200% 0; } }
-
-  @keyframes particleMove { 
-    0% { transform: translateX(0); opacity: 0.7; } 
-    50% { transform: translateX(-64px); opacity: 1; } 
-    100% { transform: translateX(-128px); opacity: 0; } 
-  }
+    body {
+        font-family: Arial, sans-serif;
+        text-align: center;
+        margin-top: 20px;
+        background-color: #001f3f;
+        color: white;
+    }
+    .fish-btn {
+        width: 64px;
+        height: 64px;
+        display: inline-block;
+        margin: 6px;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+    }
+    .equipped { border: 3px solid gold; }
+    .tabs { margin-top: 20px; }
+    .tab-button { padding: 5px 10px; margin: 0 5px; cursor: pointer; }
+    .active-tab { background-color: #ddd; color: black; }
+    .tab-content { display: none; margin-top: 20px; }
+    .tab-content.active { display: block; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    #fishingLog {
+        max-height: 150px;
+        overflow-y: auto;
+        background: #002a5f;
+        padding: 5px;
+        margin-top: 10px;
+        border-radius: 5px;
+        text-align: left;
+        font-size: 14px;
+    }
+    @keyframes flawlessMoveRight { 0% { background-position: 0 0; } 100% { background-position: 200% 0; } }
+    @keyframes particleMove { 0% { transform: translateX(0); opacity: 0.7; } 50% { transform: translateX(-64px); opacity: 1; } 100% { transform: translateX(-128px); opacity: 0; } }
 </style>
 </head>
 <body>
-
 <h1>The Fish Game</h1>
 
 <div class="tabs">
-  <button class="tab-button active-tab" onclick="showTab('game')">Game</button>
-  <button class="tab-button" onclick="showTab('inventory')">Inventory</button>
-  <button class="tab-button" onclick="showTab('fishing')">Fishing</button>
+    <button class="tab-button active-tab" onclick="showTab('game')">Game</button>
+    <button class="tab-button" onclick="showTab('inventory')">Inventory</button>
+    <button class="tab-button" onclick="showTab('fishing')">Fishing</button>
 </div>
 
 <div id="game" class="tab-content active">
-  <p id="fishFood">Fish Food: 50</p>
-  <p id="money">Money: $0</p>
-  <p id="equippedFishStats">Equipped Fish: None</p>
-  <p id="totalFishCount">Total Fish: 5</p>
+    <p id="fishFood">Fish Food: 50</p>
+    <p id="money">Money: $0</p>
+    <p id="equippedFishStats">Equipped Fish: None</p>
+    <p id="totalFishCount">Total Fish: 5</p>
 
-  <button id="feedBtn" onclick="feedFish()">Feed Equipped Fish</button>
-  <button id="sellBtn" onclick="sellFish()">Sell Equipped Fish</button>
-  <button onclick="buyFood()">Buy 10 Fish Food ($5)</button>
-  <button onclick="buyFish()">Buy 1 Fish ($20)</button>
-
-  <br><br>
-  <button id="moneyUpgradeBtn" onclick="buyMoneyUpgrade()">Upgrade Money Gain</button>
-  <p id="moneyUpgradeInfo">Next upgrade: $10, x1.2 multiplier</p>
+    <button id="feedBtn" onclick="feedFish()">Feed Equipped Fish</button>
+    <button id="sellBtn" onclick="sellFish()">Sell Equipped Fish</button>
+    <button onclick="buyFood()">Buy 10 Fish Food ($5)</button>
+    <button onclick="buyFish()">Buy 1 Fish ($20)</button>
+    <br><br>
+    <button id="moneyUpgradeBtn" onclick="buyMoneyUpgrade()">Upgrade Money Gain</button>
+    <p id="moneyUpgradeInfo">Next upgrade: $10, x1.2 multiplier</p>
 </div>
 
 <div id="inventory" class="tab-content">
-  <p id="fishCountDisplay"></p>
-  <div id="inventoryGrid"></div>
-  <br>
-  <button onclick="upgradeMaxInventory()">Upgrade Max Inventory</button>
-  <p id="maxInventoryInfo"></p>
+    <p id="fishCountDisplay"></p>
+    <div id="inventoryGrid"></div>
+    <br>
+    <button onclick="upgradeMaxInventory()">Upgrade Max Inventory</button>
+    <p id="maxInventoryInfo"></p>
 </div>
 
 <div id="fishing" class="tab-content">
-  <p>Fishing Species Chances:</p>
-  <ul>
-    <li id="chanceNothing"></li>
-    <li id="chanceBasic"></li>
-    <li id="chanceClown"></li>
-    <li id="chanceLeech"></li>
-  </ul>
-  <p id="qualityLuckInfo"></p>
-  <button id="fishBtn" onclick="fishCatchCascading()" style="padding:10px 20px;">Fish</button>
-  <p id="fishingCooldown">Cooldown: 0s</p>
-  <button onclick="upgradeLuck()">Upgrade Luck</button>
-  <p id="luckInfo"></p>
-  <button onclick="upgradeCooldown()">Upgrade Cooldown</button>
-  <p id="cooldownInfo"></p>
-  <button onclick="upgradeQualityLuck()">Upgrade Quality Luck</button>
-  <div id="fishingLog"></div>
+    <p>Fishing Species Chances:</p>
+    <ul>
+        <li id="chanceNothing"></li>
+        <li id="chanceBasic"></li>
+        <li id="chanceClown"></li>
+        <li id="chanceLeech"></li>
+    </ul>
+    <p id="qualityLuckInfo"></p>
+    <button id="fishBtn" onclick="fishCatchCascading()" style="padding:10px 20px;">Fish</button>
+    <p id="fishingCooldown">Cooldown: 0s</p>
+    <button onclick="upgradeLuck()">Upgrade Luck</button>
+    <p id="luckInfo"></p>
+    <button onclick="upgradeCooldown()">Upgrade Cooldown</button>
+    <p id="cooldownInfo"></p>
+    <button onclick="upgradeQualityLuck()">Upgrade Quality Luck</button>
+    <div id="fishingLog"></div>
 </div>
 
 <div id="globalTooltip" style="
@@ -117,320 +118,303 @@ let money = 0;
 let fishFood = 50;
 let inventory = [];
 let equippedFishIndex = null;
-
 let moneyMultiplier = 1;
 let moneyUpgradeCost = 10;
 
-let luckLevel = 0;
+let luckLevel = 0; // replaced by speciesLuckLevel internally
 let luckCost = 10;
 let cooldownLevel = 0;
 let cooldownCost = 5;
 let fishingCooldownMax = 5;
 let fishingCooldown = 0;
-let fishingInterval = null;
 
 let maxFishCount = 10;
 let inventoryUpgradeLevel = 0;
 let inventoryUpgradeCost = 20;
-
 let qualityLuckLevel = 0;
 let qualityLuckCost = 20;
 
-/* ADDED */
+let speciesLuckLevel = 0; // new species luck
+const speciesOrder = ["nothing","basic","clown","leech"];
+const baseSpeciesWeights = { nothing:55000, basic:25000, clown:15000, leech:5000 };
+
 let currentTab = "game";
 
 const qualities = [
-  { name: "Prismatic", multiplier: 1000, color: "purple", sizeMultiplier: 10, isPrismatic: true },
-  { name: "Flawless", multiplier: 50, color: "#007070", sizeMultiplier: 2 },
-  { name: "Perfect", multiplier: 8, color: "cyan", sizeMultiplier: 1 },
-  { name: "Good", multiplier: 2, color: "gold", sizeMultiplier: 1 },
-  { name: "Okay", multiplier: 1, color: "#ccc", sizeMultiplier: 1 },
-  { name: "Bad", multiplier: 0.5, color: "#555", sizeMultiplier: 1 }
+    { name: "Prismatic", multiplier: 1000, color: "purple", sizeMultiplier: 10, isPrismatic: true },
+    { name: "Flawless", multiplier: 50, color: "#007070", sizeMultiplier: 2 },
+    { name: "Perfect", multiplier: 8, color: "cyan", sizeMultiplier: 1 },
+    { name: "Good", multiplier: 2, color: "gold", sizeMultiplier: 1 },
+    { name: "Okay", multiplier: 1, color: "#ccc", sizeMultiplier: 1 },
+    { name: "Bad", multiplier: 0.5, color: "#555", sizeMultiplier: 1 }
 ];
+const qualityOrder = ["bad","okay","good","perfect","flawless","prismatic"];
 
-const qualityRank = { "Prismatic":6,"Flawless":5, "Perfect":4, "Good":3, "Okay":2, "Bad":1 };
+// --- Weight-based quality system with prismatic adjustment ---
+function calculateQualityWeights(level){
+    let weights = { bad:20000, okay:65000, good:13950, perfect:1000, flawless:50, prismatic:0 };
+    for(let l=1;l<=level;l++){
+        let lowestIndex = qualityOrder.findIndex(q=>weights[q]>0 && q!=="prismatic");
+        if(lowestIndex===-1) break;
+        let lowest = qualityOrder[lowestIndex];
+        let removal = 500 + Math.floor(weights[lowest]/10);
+        removal = Math.min(removal, weights[lowest]);
+        weights[lowest] -= removal;
 
-/* --- Species chances --- */
-function getSpeciesChancesCascadingSmooth() {
-    let nothing = Math.max(0, 65 - luckLevel * 5);
-    let basic   = Math.max(0, 50 - luckLevel * 2);
-    let clown   = 10 + luckLevel * 1.2;
-    let leech   = 2 + luckLevel * 0.3;
-
-    const basicThreshold = 10;
-    if (basic < basicThreshold && clown > 0) {
-        const transferFraction = (basicThreshold - basic) / basicThreshold;
-        const transfer = clown * transferFraction * 0.5;
-        clown -= transfer;
-        leech += transfer;
-    }
-
-    const total = nothing + basic + clown + leech;
-    return {
-        nothing: (nothing / total) * 100,
-        basic: (basic / total) * 100,
-        clown: (clown / total) * 100,
-        leech: (leech / total) * 100
-    };
-}
-
-/* --- Quality chances including Prismatic --- */
-function getQualityChancesCascadingSmooth() {
-    let prismatic = 0;
-    if (qualityLuckLevel >= 10) prismatic = 0.001 + (qualityLuckLevel - 10) * 0.001;
-
-    let flawless = 0.05 + qualityLuckLevel * 0.02;
-    let perfect  = 1 + qualityLuckLevel * 0.2;
-    let good     = 14 - qualityLuckLevel * 0.3;
-    let okay     = 65 - qualityLuckLevel * 1;
-    let bad      = 20 - qualityLuckLevel * 0.2;
-
-    good = Math.max(0, good);
-    okay = Math.max(0, okay);
-    bad  = Math.max(0, bad);
-
-    if (okay === 0) good = 0;
-
-    if (good > 0) {
-        const goodThreshold = 10;
-        if (good < goodThreshold && perfect > 0) {
-            const t = (goodThreshold - good) / goodThreshold;
-            const transfer = perfect * t * 0.4;
-            perfect -= transfer;
-            flawless += transfer * 0.25;
+        const dist = [0.9,0.09,0.009,0.001];
+        for(let i=0;i<dist.length;i++){
+            let targetIndex = lowestIndex+i+1;
+            if(targetIndex>=qualityOrder.length) break;
+            if(qualityOrder[targetIndex]==="prismatic"){
+                let toPrismatic = Math.floor(removal*dist[i]/2);
+                let leftover = Math.floor(removal*dist[i]/2);
+                weights.prismatic += toPrismatic;
+                weights.flawless += leftover;
+            } else {
+                weights[qualityOrder[targetIndex]] += Math.floor(removal*dist[i]);
+            }
+        }
+        if(l>=10){
+            if(weights.flawless>=1){ weights.flawless -=1; weights.prismatic +=1; }
+            if(l>10) weights.prismatic +=1;
         }
     }
-    if (good === 0 && perfect > 0) {
-        const t = Math.min(1, qualityLuckLevel / 50);
-        const transfer = perfect * t * 0.6;
-        perfect -= transfer;
-        flawless += transfer;
+    return weights;
+}
+
+function weightsToPercent(weights){
+    let total = Object.values(weights).reduce((a,b)=>a+b,0);
+    const chances = {};
+    for(let q in weights){ if(weights[q]>0) chances[q] = (weights[q]/total)*100; }
+    return chances;
+}
+
+function rollQuality(){
+    const chances = weightsToPercent(calculateQualityWeights(qualityLuckLevel));
+    const roll = Math.random()*100;
+    let cum=0;
+    for(let q of qualityOrder){
+        if(!chances[q]) continue;
+        cum += chances[q];
+        if(roll<cum){
+            return {...qualities.find(ql=>ql.name.toLowerCase()===q)};
+        }
     }
-
-    const total = prismatic + flawless + perfect + good + okay + bad;
-    return {
-        prismatic: (prismatic / total) * 100,
-        flawless: (flawless / total) * 100,
-        perfect:  (perfect  / total) * 100,
-        good:     (good     / total) * 100,
-        okay:     (okay     / total) * 100,
-        bad:      (bad      / total) * 100
-    };
+    return {...qualities[5]};
 }
 
-/* --- Roll quality --- */
-function rollQuality() {
-    const chances = getQualityChancesCascadingSmooth();
-    const roll = Math.random() * 100;
-    let cum = 0;
-
-    cum += chances.prismatic; if (roll < cum) return { ...qualities[0] };
-    cum += chances.flawless;  if (roll < cum) return { ...qualities[1] };
-    cum += chances.perfect;   if (roll < cum) return { ...qualities[2] };
-    cum += chances.good;      if (roll < cum) return { ...qualities[3] };
-    cum += chances.okay;      if (roll < cum) return { ...qualities[4] };
-    return { ...qualities[5] };
-}
-
-/* --- Initialize inventory --- */
+// --- Initialize inventory ---
 for(let i=0;i<5;i++){
-  const species = Math.random() < 1/3 ? "Clownfish" : "Basic Fish";
-  inventory.push({ name: species, size:1, quality:{name:"Okay", multiplier:1,color:"#ccc"} });
+    const species = Math.random()<1/3?"Clownfish":"Basic Fish";
+    inventory.push({ name: species, size:1, quality:{name:"Okay", multiplier:1,color:"#ccc"} });
 }
 
-function getMaxWorth(fish){ 
-  let base = fish.name==="Clownfish"?maxClownfishBaseWorth:fish.name==="Leech"?leechBaseWorth:10;
-  return Math.floor(base * fish.quality.multiplier * moneyMultiplier);
+// --- Utility ---
+function getMaxWorth(fish){
+    let base = fish.name==="Clownfish"?maxClownfishBaseWorth:fish.name==="Leech"?leechBaseWorth:10;
+    return Math.floor(base * fish.quality.multiplier * moneyMultiplier);
 }
 
-/* --- Tabs --- */
-function showTab(tab){ 
-  currentTab = tab;
-  hideTooltip();
-
-  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
-  document.getElementById(tab).classList.add('active');
-  document.querySelectorAll('.tab-button').forEach(btn=>btn.classList.remove('active-tab'));
-  document.querySelector(`[onclick="showTab('${tab}')"]`).classList.add('active-tab');
-  updateUI(); 
+// --- Tabs ---
+function showTab(tab){
+    currentTab=tab;
+    hideTooltip();
+    document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+    document.getElementById(tab).classList.add('active');
+    document.querySelectorAll('.tab-button').forEach(btn=>btn.classList.remove('active-tab'));
+    document.querySelectorAll('.tab-button').forEach(btn=>{ if(btn.textContent.toLowerCase()===tab) btn.classList.add('active-tab'); });
+    updateUI();
 }
 
-/* --- Global tooltip --- */
-const tooltip = document.getElementById('globalTooltip');
-function showTooltip(text, event) {
-    if (currentTab !== "inventory") return;
-    tooltip.innerHTML = text;
-    tooltip.style.left = event.pageX + 10 + 'px';
-    tooltip.style.top  = event.pageY + 10 + 'px';
-    tooltip.style.display = 'block';
+// --- Tooltip ---
+const tooltip=document.getElementById('globalTooltip');
+function showTooltip(text,event){
+    if(currentTab!=="inventory") return;
+    tooltip.innerHTML=text;
+    tooltip.style.left=event.pageX+10+'px';
+    tooltip.style.top=event.pageY+10+'px';
+    tooltip.style.display='block';
 }
-function hideTooltip() { tooltip.style.display = 'none'; }
+function hideTooltip(){ tooltip.style.display='none'; }
 
-/* --- Inventory rendering --- */
-function updateInventoryGrid() {
-    const grid = document.getElementById('inventoryGrid');
-    grid.innerHTML = '';
-    inventory.sort((a, b) => qualityRank[b.quality.name] - qualityRank[a.quality.name]);
+// --- Inventory ---
+function updateInventoryGrid(){
+    const grid=document.getElementById('inventoryGrid');
+    grid.innerHTML='';
+    inventory.sort((a,b)=>{
+        const aIndex = qualityOrder.indexOf(a.quality.name.toLowerCase());
+        const bIndex = qualityOrder.indexOf(b.quality.name.toLowerCase());
+        return bIndex - aIndex;
+    });
 
-    inventory.forEach((f, i) => {
-        const div = document.createElement('div');
-        div.className = 'fish-btn';
-
-        if(f.quality.name === "Flawless") {
-            div.style.background = 'repeating-linear-gradient(90deg, #007070 0px, #006f6f 15px, #005f5f 30px, #004f4f 45px)';
-            div.style.backgroundSize = '200% 100%';
-            div.style.animation = 'flawlessMoveRight 6s linear infinite';
-        } else if(f.quality.name === "Prismatic") {
-            div.style.background = 'repeating-linear-gradient(90deg, #800080 0px, #6a0dad 15px, #4b0082 30px, #8a2be2 45px)';
-            div.style.backgroundSize = '200% 100%';
-            div.style.animation = 'flawlessMoveRight 6s linear infinite';
-
-            const particleCount = 5 + Math.floor(Math.random() * 5);
-            for(let p=0; p<particleCount; p++){
-                const particle = document.createElement('div');
+    inventory.forEach((f,i)=>{
+        const div=document.createElement('div');
+        div.className='fish-btn';
+        if(f.quality.name==="Flawless"){
+            div.style.background='repeating-linear-gradient(90deg, #007070 0px, #006f6f 15px, #005f5f 30px, #004f4f 45px)';
+            div.style.backgroundSize='200% 100%';
+            div.style.animation='flawlessMoveRight 6s linear infinite';
+        } else if(f.quality.name==="Prismatic"){
+            div.style.background='repeating-linear-gradient(90deg, #800080 0px, #6a0dad 15px, #4b0082 30px, #8a2be2 45px)';
+            div.style.backgroundSize='200% 100%';
+            div.style.animation='flawlessMoveRight 6s linear infinite';
+            const particleCount = 5 + Math.floor(Math.random()*5);
+            for(let p=0;p<particleCount;p++){
+                const particle=document.createElement('div');
                 particle.style.position='absolute';
                 particle.style.width='2px';
                 particle.style.height='2px';
                 particle.style.background='white';
-                particle.style.boxShadow='0 0 6px white, 0 0 10px white';
+                particle.style.boxShadow='0 0 6px white,0 0 10px white';
                 particle.style.borderRadius='50%';
                 particle.style.top=Math.random()*64+'px';
                 particle.style.left='64px';
                 particle.style.opacity=0.7;
                 particle.style.animation='particleMove 6s linear infinite';
-                particle.style.animationDelay = `${Math.random()*3}s`;
+                particle.style.animationDelay=`${Math.random()*3}s`;
                 div.appendChild(particle);
             }
         } else {
-            div.style.backgroundColor = f.quality.color;
+            div.style.backgroundColor=f.quality.color;
         }
-
-        if(i === equippedFishIndex) div.classList.add('equipped');
-
-        const img = document.createElement('img');
-        img.src = f.name==="Clownfish"?'images/clownfish_4x.png':f.name==="Leech"?'images/leech_4x.png':'images/basic_fish_4x.png';
-        img.width = 64; img.height = 64;
+        if(i===equippedFishIndex) div.classList.add('equipped');
+        const img=document.createElement('img');
+        img.src=f.name==="Clownfish"?'images/clownfish_4x.png':f.name==="Leech"?'images/leech_4x.png':'images/basic_fish_4x.png';
+        img.width=64; img.height=64;
         div.appendChild(img);
-
-        const baseMax = f.name==="Clownfish"?maxClownfishSize:f.name==="Leech"?leechMaxSize:maxFishSizeDefault;
-        const max = Math.floor(baseMax * (f.quality.sizeMultiplier || 1));
-
-        const tooltipHTML = `
-<b></b> ${f.name}<br>
-<b></b> <span style="color:${f.quality.color}">${f.quality.name}</span><br>
-<b>Max Size:</b> ${max}<br>
-<b>Max Worth:</b> $${getMaxWorth(f)}
-`;
-        div.onmouseenter = (e) => showTooltip(tooltipHTML, e);
-        div.onmousemove = (e) => showTooltip(tooltipHTML, e);
-        div.onmouseleave = hideTooltip;
-
-        div.onclick = () => { 
-          equippedFishIndex = i; 
-          hideTooltip();
-          updateUI(); 
-          showTab('game'); 
-        };
-
+        const baseMax=f.name==="Clownfish"?maxClownfishSize:f.name==="Leech"?leechMaxSize:maxFishSizeDefault;
+        const max=Math.floor(baseMax*(f.quality.sizeMultiplier||1));
+        const tooltipHTML=`<b>${f.name}</b><br> <b>Quality:</b> <span style="color:${f.quality.color}">${f.quality.name}</span><br> <b>Max Size:</b> ${max}<br> <b>Max Worth:</b> $${getMaxWorth(f)}`;
+        div.onmouseenter=(e)=>showTooltip(tooltipHTML,e);
+        div.onmousemove=(e)=>showTooltip(tooltipHTML,e);
+        div.onmouseleave=hideTooltip;
+        div.onclick=()=>{ equippedFishIndex=i; hideTooltip(); updateUI(); showTab('game'); };
         grid.appendChild(div);
     });
 }
 
-/* --- Update UI --- */
+// --- UI Update ---
 function updateUI(){
-  document.getElementById('fishFood').textContent = `Fish Food: ${fishFood}`;
-  document.getElementById('money').textContent = `Money: $${money}`;
-  document.getElementById('equippedFishStats').textContent = equippedFishIndex===null?"Equipped Fish: None":`${inventory[equippedFishIndex].quality.name} ${inventory[equippedFishIndex].name} (Size: ${inventory[equippedFishIndex].size}/${inventory[equippedFishIndex].name==="Clownfish"?maxClownfishSize:inventory[equippedFishIndex].name==="Leech"?leechMaxSize:maxFishSizeDefault})`;
-  document.getElementById('totalFishCount').textContent = `Total Fish: ${inventory.length}`;
-  document.getElementById('feedBtn').style.display = equippedFishIndex===null?'none':'inline-block';
-  document.getElementById('sellBtn').style.display = equippedFishIndex===null?'none':'inline-block';
-  document.getElementById('moneyUpgradeInfo').textContent=`Next upgrade: $${moneyUpgradeCost}, x1.2 multiplier`;
-  document.getElementById('fishCountDisplay').textContent=`Fish owned: ${inventory.length}/${maxFishCount}`;
-  document.getElementById('maxInventoryInfo').textContent=`Next upgrade: $${inventoryUpgradeCost}, +5 fish per level`;
+    document.getElementById('fishFood').textContent=`Fish Food: ${fishFood}`;
+    document.getElementById('money').textContent=`Money: $${money}`;
+    document.getElementById('equippedFishStats').textContent=equippedFishIndex===null?"Equipped Fish: None":`${inventory[equippedFishIndex].quality.name} ${inventory[equippedFishIndex].name} (Size: ${inventory[equippedFishIndex].size}/${inventory[equippedFishIndex].name==="Clownfish"?maxClownfishSize:inventory[equippedFishIndex].name==="Leech"?leechMaxSize:maxFishSizeDefault})`;
+    document.getElementById('totalFishCount').textContent=`Total Fish: ${inventory.length}`;
+    document.getElementById('feedBtn').style.display=equippedFishIndex===null?'none':'inline-block';
+    document.getElementById('sellBtn').style.display=equippedFishIndex===null?'none':'inline-block';
+    document.getElementById('moneyUpgradeInfo').textContent=`Next upgrade: $${moneyUpgradeCost}, x1.2 multiplier`;
+    document.getElementById('fishCountDisplay').textContent=`Fish owned: ${inventory.length}/${maxFishCount}`;
+    document.getElementById('maxInventoryInfo').textContent=`Next upgrade: $${inventoryUpgradeCost}, +5 fish per level`;
+    updateInventoryGrid();
 
-  updateInventoryGrid();
+    const speciesChances = getSpeciesChancesCascadingSmooth();
+    document.getElementById('chanceNothing').textContent=`Nothing: ${speciesChances.nothing.toFixed(1)}%`;
+    document.getElementById('chanceBasic').textContent=`Basic Fish: ${speciesChances.basic.toFixed(1)}%`;
+    document.getElementById('chanceClown').textContent=`Clownfish: ${speciesChances.clown.toFixed(1)}%`;
+    document.getElementById('chanceLeech').textContent=`Leech: ${speciesChances.leech.toFixed(1)}%`;
 
-  const speciesChances = getSpeciesChancesCascadingSmooth();
-  document.getElementById('chanceNothing').textContent=`Nothing: ${speciesChances.nothing.toFixed(1)}%`;
-  document.getElementById('chanceBasic').textContent=`Basic Fish: ${speciesChances.basic.toFixed(1)}%`;
-  document.getElementById('chanceClown').textContent=`Clownfish: ${speciesChances.clown.toFixed(1)}%`;
-  document.getElementById('chanceLeech').textContent=`Leech: ${speciesChances.leech.toFixed(1)}%`;
-
-  const qChances = getQualityChancesCascadingSmooth();
-  document.getElementById('qualityLuckInfo').textContent=`Quality Luck Level: ${qualityLuckLevel} (Next upgrade: $${qualityLuckCost})\nPrismatic: ${qChances.prismatic.toFixed(5)}%, Flawless: ${qChances.flawless.toFixed(2)}%, Perfect: ${qChances.perfect.toFixed(1)}%, Good: ${qChances.good.toFixed(1)}%, Okay: ${qChances.okay.toFixed(1)}%, Bad: ${qChances.bad.toFixed(1)}%`;
-
-  document.getElementById('luckInfo').textContent=`Luck Level: ${luckLevel} (Next upgrade: $${luckCost})`;
-  document.getElementById('cooldownInfo').textContent=`Cooldown Level: ${cooldownLevel} (Next upgrade: $${cooldownCost})`;
+    const qChances = weightsToPercent(calculateQualityWeights(qualityLuckLevel));
+    const displayText = Object.entries(qChances).map(([k,v])=>`${k.charAt(0).toUpperCase()+k.slice(1)}: ${v.toFixed(2)}%`).join(', ');
+    document.getElementById('qualityLuckInfo').textContent=`Quality Luck Level: ${qualityLuckLevel} (Next upgrade: $${qualityLuckCost})\n${displayText}`;
+    document.getElementById('luckInfo').textContent=`Species Luck Level: ${speciesLuckLevel} (Next upgrade: $${luckCost})`;
+    document.getElementById('cooldownInfo').textContent=`Cooldown Level: ${cooldownLevel} (Next upgrade: $${cooldownCost})`;
 }
 
-/* --- Game functions --- */
-function feedFish(){ if(equippedFishIndex===null) return; const f=inventory[equippedFishIndex]; const baseMax=f.name==="Clownfish"?maxClownfishSize:f.name==="Leech"?leechMaxSize:maxFishSizeDefault; const max=Math.floor(baseMax*(f.quality.sizeMultiplier||1)); if(f.size<max&&fishFood>0){ f.size++; fishFood--; updateUI(); } }
-function sellFish(){ if(equippedFishIndex===null) return; const f=inventory[equippedFishIndex]; const baseMax=f.name==="Clownfish"?maxClownfishSize:f.name==="Leech"?leechMaxSize:maxFishSizeDefault; const max=Math.floor(baseMax*(f.quality.sizeMultiplier||1)); const base=f.name==="Clownfish"?Math.floor(f.size/max*maxClownfishBaseWorth):f.name==="Leech"?Math.floor(f.size/max*leechBaseWorth):(f.size>=max?10:Math.floor(f.size)); money+=Math.floor(base*f.quality.multiplier*moneyMultiplier); inventory.splice(equippedFishIndex,1); equippedFishIndex=null; updateUI(); }
-function buyFood(){ if(money>=5){ money-=5; fishFood+=10; updateUI(); } }
-function buyFish(){ if(inventory.length>=maxFishCount) return; if(money>=20){ money-=20; const speciesRoll=Math.random(); let species; if(speciesRoll<1/3){ species = Math.random()<0.2?"Leech":"Clownfish"; } else species="Basic Fish"; inventory.push({name:species,size:1,quality:rollQuality()}); updateUI(); } }
-function buyMoneyUpgrade(){ if(money>=moneyUpgradeCost){ money-=moneyUpgradeCost; moneyMultiplier*=1.2; moneyUpgradeCost=Math.round(moneyUpgradeCost*2); updateUI(); } }
-
-/* --- Fishing --- */
-function fishCatchCascading() {
-    if (fishingCooldown > 0) return;
-    if (inventory.length >= maxFishCount) { logFishing("Inventory full!"); return; }
-
-    const chances = getSpeciesChancesCascadingSmooth();
-    const roll = Math.random() * 100;
-    let cum = 0;
-    let caught = null;
-
-    cum += chances.nothing;
-    if (roll < cum) { logFishing("You caught nothing!"); startCooldown(); return; }
-
-    cum += chances.basic;
-    if (roll < cum) caught = { name: "Basic Fish", size: 1, quality: rollQuality() };
-    else if ((cum += chances.clown) && roll < cum) caught = { name: "Clownfish", size: 1, quality: rollQuality() };
-    else caught = { name: "Leech", size: 1, quality: rollQuality() };
-
-    inventory.push(caught);
-    logFishing(`You caught a ${caught.quality.name} ${caught.name}!`);
-
-    startCooldown();
+// --- Game Functions ---
+function feedFish(){
+    if(equippedFishIndex===null) return;
+    const f=inventory[equippedFishIndex];
+    const baseMax=f.name==="Clownfish"?maxClownfishSize:f.name==="Leech"?leechMaxSize:maxFishSizeDefault;
+    const max=Math.floor(baseMax*(f.quality.sizeMultiplier||1));
+    if(f.size<max && fishFood>0){ f.size++; fishFood--; updateUI(); }
+}
+function sellFish(){
+    if(equippedFishIndex===null) return;
+    const f=inventory[equippedFishIndex];
+    const baseMax=f.name==="Clownfish"?maxClownfishSize:f.name==="Leech"?leechMaxSize:maxFishSizeDefault;
+    const base=f.name==="Clownfish"?Math.floor(f.size/max*maxClownfishBaseWorth):f.name==="Leech"?Math.floor(f.size/max*leechBaseWorth):(f.size>=baseMax?10:Math.floor(f.size));
+    money+=Math.floor(base*f.quality.multiplier*moneyMultiplier);
+    inventory.splice(equippedFishIndex,1);
+    equippedFishIndex=null;
     updateUI();
 }
-
-function startCooldown() {
-    fishingCooldown = Math.max(1, fishingCooldownMax - cooldownLevel);
-    updateFishingCooldown();
-    if (!fishingInterval) fishingInterval = setInterval(updateFishingCooldown, 1000);
-}
-
-function updateFishingCooldown(){ 
-    const btn=document.getElementById('fishBtn'); 
-    if(fishingCooldown>0){ 
-        document.getElementById('fishingCooldown').textContent=`Cooldown: ${fishingCooldown}s`; 
-        btn.disabled=true; 
-        fishingCooldown--; 
-    } else { 
-        document.getElementById('fishingCooldown').textContent="Cooldown: 0s"; 
-        btn.disabled=false; 
-        clearInterval(fishingInterval); 
-        fishingInterval=null; 
+function buyFood(){ if(money>=5){ money-=5; fishFood+=10; updateUI(); } }
+function buyFish(){ 
+    if(inventory.length>=maxFishCount) return; 
+    if(money>=20){ 
+        money-=20; 
+        const speciesRoll=Math.random(); 
+        let species; 
+        if(speciesRoll<1/3){ species = Math.random()<0.2?"Leech":"Clownfish"; } 
+        else species="Basic Fish"; 
+        inventory.push({name:species,size:1,quality:rollQuality()}); 
+        updateUI(); 
     } 
 }
+function buyMoneyUpgrade(){ if(money>=moneyUpgradeCost){ money-=moneyUpgradeCost; moneyMultiplier*=1.2; moneyUpgradeCost=Math.round(moneyUpgradeCost*1.5); updateUI(); } }
 
-function logFishing(msg){ 
-    const log=document.getElementById('fishingLog'); 
-    const p=document.createElement('p'); 
-    p.textContent=msg; 
-    log.appendChild(p); 
-    log.scrollTop=log.scrollHeight; 
+// --- Fishing functions ---
+function fishCatchCascading(){
+    if(fishingCooldown>0) return;
+    fishingCooldown=fishingCooldownMax;
+    const speciesWeights=calculateSpeciesWeights(speciesLuckLevel);
+    const totalWeight=Object.values(speciesWeights).reduce((a,b)=>a+b,0);
+    let r=Math.random()*totalWeight;
+    let caughtSpecies="nothing";
+    for(const sp of speciesOrder){ r-=speciesWeights[sp]; if(r<=0){ caughtSpecies=sp; break; } }
+    if(caughtSpecies==="nothing"){ logFishing("Caught nothing!"); }
+    else{
+        let fName = caughtSpecies==="basic"?"Basic Fish":caughtSpecies==="clown"?"Clownfish":"Leech";
+        const fQuality=rollQuality();
+        inventory.push({name:fName,size:1,quality:fQuality});
+        logFishing(`Caught a ${fQuality.name} ${fName}!`);
+    }
+    updateUI();
+}
+function logFishing(msg){
+    const log=document.getElementById('fishingLog');
+    log.innerHTML=`${msg}<br>`+log.innerHTML;
 }
 
-/* --- Upgrades --- */
-function upgradeLuck(){ if(money>=luckCost){ money-=luckCost; luckLevel++; luckCost=Math.round(luckCost*1.2); updateUI(); } }
-function upgradeCooldown(){ if(cooldownLevel>=4) return; if(money>=cooldownCost){ money-=cooldownCost; cooldownLevel++; cooldownCost=Math.round(cooldownCost*3); updateUI(); } }
-function upgradeQualityLuck(){ if(money>=qualityLuckCost){ money-=qualityLuckCost; qualityLuckLevel++; qualityLuckCost=Math.round(qualityLuckCost*1.2); updateUI(); } }
-function upgradeMaxInventory(){ if(money>=inventoryUpgradeCost){ money-=inventoryUpgradeCost; inventoryUpgradeLevel++; maxFishCount+=5; inventoryUpgradeCost=Math.round(inventoryUpgradeCost*2); updateUI(); } }
+// --- Upgrade functions ---
+function upgradeQualityLuck(){ if(money>=qualityLuckCost){ money-=qualityLuckCost; qualityLuckLevel++; qualityLuckCost=Math.floor(qualityLuckCost*1.15); updateUI(); } }
+function upgradeCooldown(){ if(money>=cooldownCost){ money-=cooldownCost; cooldownLevel++; cooldownCost=Math.floor(cooldownCost*3); fishingCooldownMax=Math.max(1,fishingCooldownMax-1); updateUI(); } }
+function upgradeMaxInventory(){ if(money>=inventoryUpgradeCost){ money-=inventoryUpgradeCost; inventoryUpgradeLevel++; maxFishCount+=5; inventoryUpgradeCost=Math.floor(inventoryUpgradeCost*2); updateUI(); } }
+function upgradeLuck(){ if(money>=luckCost){ money-=luckCost; speciesLuckLevel++; luckCost=Math.floor(luckCost*1.15); updateUI(); } }
 
+// --- Species weight calculation ---
+function calculateSpeciesWeights(level){
+    let weights={...baseSpeciesWeights};
+    for(let l=1;l<=level;l++){
+        let lowestIndex=speciesOrder.findIndex(sp=>weights[sp]>0 && sp!=="leech");
+        if(lowestIndex===-1) break;
+        let lowest=speciesOrder[lowestIndex];
+        let removal=Math.min(weights[lowest],500+Math.floor(weights[lowest]/10));
+        weights[lowest]-=removal;
+        for(let i=1;i<speciesOrder.length-lowestIndex;i++){
+            let targetIndex=lowestIndex+i;
+            if(targetIndex>=speciesOrder.length) break;
+            let target=speciesOrder[targetIndex];
+            if(target==="leech"){
+                let half=Math.floor(removal/2);
+                let leftover=removal-half;
+                weights.leech+=half;
+                weights.clown+=leftover;
+            } else weights[target]+=Math.floor(removal*[0.9,0.09,0.01][i-1]);
+        }
+    }
+    return weights;
+}
+function getSpeciesChancesCascadingSmooth(){
+    const w=calculateSpeciesWeights(speciesLuckLevel);
+    const total=Object.values(w).reduce((a,b)=>a+b,0);
+    return {nothing:w.nothing/total*100,basic:w.basic/total*100,clown:w.clown/total*100,leech:w.leech/total*100};
+}
+
+// --- Cooldown interval ---
+setInterval(()=>{ if(fishingCooldown>0){ fishingCooldown--; if(fishingCooldown<0) fishingCooldown=0; document.getElementById('fishingCooldown').textContent=`Cooldown: ${fishingCooldown}s`; } },1000);
+
+// --- Initialize ---
 updateUI();
 </script>
-
 </body>
 </html>
