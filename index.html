@@ -329,12 +329,15 @@ function feedFish(){
 }
 function sellFish(){
     if(equippedFishIndex===null) return;
-    const f=inventory[equippedFishIndex];
-    const baseMax=f.name==="Clownfish"?maxClownfishSize:f.name==="Leech"?leechMaxSize:maxFishSizeDefault;
-    const base=f.name==="Clownfish"?Math.floor(f.size/max*maxClownfishBaseWorth):f.name==="Leech"?Math.floor(f.size/max*leechBaseWorth):(f.size>=baseMax?10:Math.floor(f.size));
-    money+=Math.floor(base*f.quality.multiplier*moneyMultiplier);
-    inventory.splice(equippedFishIndex,1);
-    equippedFishIndex=null;
+    const f = inventory[equippedFishIndex];
+    const baseMax = f.name==="Clownfish"?maxClownfishSize:f.name==="Leech"?leechMaxSize:maxFishSizeDefault;
+    const max = Math.floor(baseMax * (f.quality.sizeMultiplier || 1)); // <-- define max properly
+    const base = f.name==="Clownfish" ? Math.floor(f.size/max*maxClownfishBaseWorth)
+               : f.name==="Leech" ? Math.floor(f.size/max*leechBaseWorth)
+               : (f.size>=max?10:Math.floor(f.size));
+    money += Math.floor(base * f.quality.multiplier * moneyMultiplier);
+    inventory.splice(equippedFishIndex, 1);
+    equippedFishIndex = null;
     updateUI();
 }
 function buyFood(){ if(money>=5){ money-=5; fishFood+=10; updateUI(); } }
