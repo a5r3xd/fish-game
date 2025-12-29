@@ -304,7 +304,7 @@ function updateInventoryGrid(){
         div.appendChild(img);
         const baseMax=f.name==="Clownfish"?maxClownfishSize:f.name==="Leech"?leechMaxSize:maxFishSizeDefault;
         const max=Math.floor(baseMax*(f.quality.sizeMultiplier||1));
-        const tooltipHTML=`<b>${f.name}</b><br> <b>Quality:</b> <span style="color:${f.quality.color}">${f.quality.name}</span><br> <b>Max Size:</b> ${max}<br> <b>Max Worth:</b> $${getMaxWorth(f)}`;
+        const tooltipHTML=`<b>${f.name}</b><br> <b></b> <span style="color:${f.quality.color}">${f.quality.name}</span><br> <b>Max Size:</b> ${max}<br> <b>Max Worth:</b> $${getMaxWorth(f)}`;
         div.onmouseenter=(e)=>showTooltip(tooltipHTML,e);
         div.onmousemove=(e)=>showTooltip(tooltipHTML,e);
         div.onmouseleave=hideTooltip;
