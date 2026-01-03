@@ -510,6 +510,57 @@ function getSpeciesChancesCascadingSmooth(){
     return {nothing:w.nothing/total*100,basic:w.basic/total*100,clown:w.clown/total*100,leech:w.leech/total*100};
 }
 
+/* ---------- RANDOM BACKGROUND FISH ---------- */
+const bgFishImages = [
+    'images/basic_fish_4x.png',
+    'images/clownfish_4x.png',
+    'images/leech_4x.png'
+];
+
+function spawnBackgroundFish() {
+    const fish = document.createElement('img');
+    fish.src = bgFishImages[Math.floor(Math.random() * bgFishImages.length)];
+    fish.style.position = 'fixed';
+    fish.style.top = Math.random() * (window.innerHeight - 64) + 'px';
+    fish.style.width = '64px';
+    fish.style.height = '64px';
+    fish.style.zIndex = 0;
+    fish.style.pointerEvents = 'none';
+    
+    const moveRight = Math.random() < 0.5;
+    fish.dataset.direction = moveRight ? 'right' : 'left';
+    
+    if(moveRight){
+        fish.style.left = '-64px';
+        fish.style.transform = 'scaleX(-1)'; // face right
+    } else {
+        fish.style.left = window.innerWidth + 'px';
+        fish.style.transform = 'scaleX(1)'; // face left
+    }
+
+    document.body.appendChild(fish);
+
+    const speed = 50 + Math.random() * 100; // pixels per second
+    const update = () => {
+        const delta = 16; // approx ms per frame
+        let left = parseFloat(fish.style.left);
+        if(fish.dataset.direction === 'right'){
+            left += speed * delta / 1000;
+            if(left > window.innerWidth) return fish.remove();
+        } else {
+            left -= speed * delta / 1000;
+            if(left < -64) return fish.remove();
+        }
+        fish.style.left = left + 'px';
+        requestAnimationFrame(update);
+    };
+    requestAnimationFrame(update);
+}
+
+// spawn a new fish every 2–4 seconds
+setInterval(spawnBackgroundFish, 2000 + Math.random() * 2000);
+
+
 /* ---------- COOLDOWN ---------- */
 setInterval(()=>{ if(fishingCooldown>0){ fishingCooldown--; if(fishingCooldown<0) fishingCooldown=0; document.getElementById('fishingCooldown').textContent=`Cooldown: ${fishingCooldown}s`; } },1000);
 
