@@ -40,10 +40,21 @@
     }
     @keyframes flawlessMoveRight { 0% { background-position: 0 0; } 100% { background-position: 200% 0; } }
     @keyframes particleMove { 0% { transform: translateX(0); opacity: 0.7; } 50% { transform: translateX(-64px); opacity: 1; } 100% { transform: translateX(-128px); opacity: 0; } }
+#background-fish-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none; /* so fish don’t block clicks */
+    z-index: -1;          /* behind everything */
+}
 </style>
 </head>
 <body>
 <h1>The Fish Game</h1>
+
+<div id="background-fish-container"></div>
 
 <div class="tabs">
     <button class="tab-button active-tab" onclick="showTab('game')">Game</button>
@@ -117,7 +128,6 @@
     <button onclick="hardReset()" style="background:red;color:white;padding:10px 15px;">
         HARD RESET (Deletes all progress)
     </button>
-</div>
 
 
 <script>
@@ -519,6 +529,7 @@ const bgFishImages = [
 
 function spawnBackgroundFish() {
     const fish = document.createElement('img');
+    const container = document.getElementById('background-fish-container');
     fish.src = bgFishImages[Math.floor(Math.random() * bgFishImages.length)];
     fish.style.position = 'fixed';
     fish.style.top = Math.random() * (window.innerHeight - 64) + 'px';
@@ -537,8 +548,8 @@ function spawnBackgroundFish() {
         fish.style.left = window.innerWidth + 'px';
         fish.style.transform = 'scaleX(1)'; // face left
     }
+        container.appendChild(fish);
 
-    document.body.appendChild(fish);
 
     const speed = 50 + Math.random() * 100; // pixels per second
     const update = () => {
