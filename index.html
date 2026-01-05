@@ -60,6 +60,7 @@
     <button class="tab-button active-tab" onclick="showTab('game')">Game</button>
     <button class="tab-button" onclick="showTab('inventory')">Inventory</button>
     <button class="tab-button" onclick="showTab('fishing')">Fishing</button>
+    <button class="tab-button" onclick="showTab('foodShop')">Food Shop</button>
     <button class="tab-button" onclick="showTab('options')">Options</button>
 </div>
 
@@ -128,7 +129,12 @@
     <button onclick="hardReset()" style="background:red;color:white;padding:10px 15px;">
         HARD RESET (Deletes all progress)
     </button>
+</div>
 
+<div id="foodShop" class="tab-content">
+    <h3>Food Shop</h3>
+    <div id="foodShopGrid"></div>
+</div>
 
 <script>
 const maxFishSizeDefault = 10;
@@ -312,7 +318,7 @@ function showTab(tab){
 }
 const tooltip=document.getElementById('globalTooltip');
 function showTooltip(text,event){
-    if(currentTab!=="inventory") return;
+    if(currentTab !== "inventory" && currentTab !== "foodShop") return;
     tooltip.innerHTML=text;
     tooltip.style.left=event.pageX+10+'px';
     tooltip.style.top=event.pageY+10+'px';
@@ -405,6 +411,7 @@ function updateUI(){
     document.getElementById('fishCountDisplay').textContent=`Fish owned: ${inventory.length}/${maxFishCount}`;
     document.getElementById('maxInventoryInfo').textContent=`Next upgrade: $${inventoryUpgradeCost}, +5 fish per level`;
     updateInventoryGrid();
+    updateFoodShop();
 
     const speciesChances = getSpeciesChancesCascadingSmooth();
     document.getElementById('chanceNothing').textContent=`Nothing: ${speciesChances.nothing.toFixed(1)}%`;
@@ -519,6 +526,60 @@ function getSpeciesChancesCascadingSmooth(){
     const total=Object.values(w).reduce((a,b)=>a+b,0);
     return {nothing:w.nothing/total*100,basic:w.basic/total*100,clown:w.clown/total*100,leech:w.leech/total*100};
 }
+
+const foodShopItems = [
+    { quality: "Bad", cost: 1, foodGain: 2 },
+    { quality: "Okay", cost: 5, foodGain: 10 },
+    { quality: "Good", cost: 50, foodGain: 30 },
+    { quality: "Perfect", cost: 500, foodGain: 90 },
+    { quality: "Flawless", cost: 5000, foodGain: 270 },
+    { quality: "Prismatic", cost: 50000, foodGain: 810 },
+    { quality: "Astral", cost: 500000, foodGain: 2430 },
+];
+
+function updateFoodShop() {
+    const grid = document.getElementById('foodShopGrid');
+    grid.innerHTML = '';
+    foodShopItems.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'fish-btn';
+
+        // Get quality info (color, etc)
+        const qualityObj = qualities.find(q => q.name.toLowerCase() === item.quality.toLowerCase());
+        div.style.backgroundColor = qualityObj ? qualityObj.color : "#888";
+
+        // Image
+        const img = document.createElement('img');
+        img.src = 'images/fish_jar_4x.png';
+        img.width = 64; img.height = 64;
+        div.appendChild(img);
+
+        // Tooltip content (like inventory)
+        const tooltipHTML = `
+            <b>Fish Jar</b><br>
+            <span style="color:${qualityObj.color}"><b></b> ${qualityObj.name}</span><br>
+            <b>Food Gain:</b> ${item.foodGain}<br>
+            <b>Cost:</b> $${item.cost}
+        `;
+
+        // Same tooltip logic as inventory
+        div.onmouseenter = (e) => showTooltip(tooltipHTML, e);
+        div.onmousemove = (e) => showTooltip(tooltipHTML, e);
+        div.onmouseleave = hideTooltip;
+
+        // Click buys the food
+        div.onclick = () => {
+            if (money >= item.cost) {
+                money -= item.cost;
+                fishFood += item.foodGain;
+                updateUI();
+            }
+        };
+
+        grid.appendChild(div);
+    });
+}
+
 
 /* ---------- RANDOM BACKGROUND FISH ---------- */
 const bgFishImages = [
